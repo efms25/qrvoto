@@ -7,14 +7,14 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:41179691668:android:55e3d5ee4ac58185101281",
+        "mobilesdk_app_id": "1:41179691668:android:92aad2815b757b8c101281",
         "android_client_info": {
-          "package_name": "com.qrvoto"
+          "package_name": "com.qrvotonew"
         }
       },
       "oauth_client": [
         {
-          "client_id": "41179691668-shepnddntgok1mo9j8jqev8kr38l99dp.apps.googleusercontent.com",
+          "client_id": "41179691668-9d4ag211c2lofp1vsft0pr77nm7v9go5.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -27,8 +27,15 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "41179691668-shepnddntgok1mo9j8jqev8kr38l99dp.apps.googleusercontent.com",
+              "client_id": "41179691668-9d4ag211c2lofp1vsft0pr77nm7v9go5.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "41179691668-2526sa4l3f32osmlugbnpamsfo6t143b.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.qrvoto"
+              }
             }
           ]
         }
