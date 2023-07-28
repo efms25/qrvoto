@@ -1,0 +1,25 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "extends": ["plugin:react/recommended", "airbnb", "airbnb/hooks", "prettier"],
+    "parserOptions": {
+        "ecmaFeatures": {
+            "jsx": true
+        },
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "plugins": ["react", "react-native"],
+    "rules": {
+        // permite arquivos .js possuam JSX
+        "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
+
+        // Evitar que o eslint reclame sobre a variável "styles" sendo usada antes de ser definida
+        "no-use-before-define": ["error", { "variables": false }],
+
+        // Ajustar para nao passar por erros com react-navigation
+        "react/prop-types": ["warning", {"ignore": ["navigation", "navigation.navigate"]}]
+    }
+}

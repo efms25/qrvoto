@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "41179691668",
+    "project_id": "qrvoto-app",
+    "storage_bucket": "qrvoto-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41179691668:android:55e3d5ee4ac58185101281",
+        "android_client_info": {
+          "package_name": "com.qrvoto"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "41179691668-shepnddntgok1mo9j8jqev8kr38l99dp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCj5MHCXMuypbqWvHWWMqgxr9Ul9AuFSdc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "41179691668-shepnddntgok1mo9j8jqev8kr38l99dp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
