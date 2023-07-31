@@ -1,4 +1,5 @@
-import { Text, Icon, Container, Button, Box, VStack, HStack, IconButton } from 'native-base';
+import { Text, Icon, Container, Button, Box, VStack, HStack, IconButton, Alert, useToast, CloseIcon } from 'native-base';
+// import produce from 'immer'
 import { StyleSheet, Dimensions } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -9,8 +10,12 @@ import IonIcons from 'react-native-vector-icons/Ionicons';
 import { Toast } from 'react-native-toast-message/lib/src/Toast';
 import { useScanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
 
+
+
 export default function QrScanner() {
   const navigation = useNavigation();
+  const toast = useToast();
+
   const [flash, setFlash] = useState(false);
   const [qrCodes, setQrCodes] = useState([])
   const [cameraPermission, setCameraPermission] = useState();
@@ -22,6 +27,34 @@ export default function QrScanner() {
     checkInverted: true,
   });
 
+  const ToastAlert = ({
+    id,
+    status,
+    variant,
+    title,
+    description,
+    isClosable,
+    ...rest
+  }) => <Alert maxWidth="100%" alignSelf="center" flexDirection="row" status={status ? status : "info"} variant={variant} {...rest}>
+      <VStack space={1} flexShrink={1} w="100%">
+        <HStack flexShrink={1} alignItems="center" justifyContent="space-between">
+          <HStack space={2} flexShrink={1} alignItems="center">
+            <Alert.Icon />
+            <Text fontSize="md" fontWeight="medium" flexShrink={1} color={variant === "solid" ? "lightText" : variant !== "outline" ? "darkText" : null}>
+              {title}
+            </Text>
+          </HStack>
+          {isClosable ? <IconButton variant="unstyled" icon={<CloseIcon size="3" />} _icon={{
+            color: variant === "solid" ? "lightText" : "darkText"
+          }} onPress={() => toast.close(id)} /> : null}
+        </HStack>
+        <Text px="6" color={variant === "solid" ? "lightText" : variant !== "outline" ? "darkText" : null}>
+          {description}
+        </Text>
+      </VStack>
+    </Alert>;
+
+
   useEffect(() => {
     (async () => {
       const cameraPermissionStatus = await Camera.requestCameraPermission();
@@ -30,8 +63,84 @@ export default function QrScanner() {
   }, []);
 
   useEffect(() => {
+
     if (barcodes.length) {
-      console.log(barcodes, '--barcodes');
+      try {
+        if (barcodes && barcodes[0] && barcodes[0].displayValue) {
+          const buCode = barcodes[0].displayValue;
+          const qrPerBuTotalQty = buCode.split("QRBU:")[1].split(" ")[0].split(':');
+
+          if (qrPerBuTotalQty[1] > 1) {
+
+            toast.show({
+              placement: "top",
+              render: () => ToastAlert({
+                variant: "left-accent",
+                status: "warning",
+                isClosable: true,
+                title: 'ATENÇÃO',
+                description: 'Os dados desse BU são divididos em ' + qrPerBuTotalQty[1] + ' QrCodes, leia todos para salvar o Boletim com sucesso.',
+              })
+            })
+
+            let qrArr = []
+
+            if (qrCodes.length === 0) {
+              for (let i = 0; i < parseInt(qrPerBuTotalQty[1]); i++) {
+                qrArr.push({
+                  scanned: (parseInt(qrPerBuTotalQty[0]) - 1) === i,
+                  data: (parseInt(qrPerBuTotalQty[0]) - 1) === i && buCode
+                })
+              }
+              setQrCodes(qrArr)
+            } else {
+              // setQrCodes(produce(draft => {
+              //   draft[(parseInt(qrPerBuTotalQty[0]) - 1)] = {
+              //     scanned: true,
+              //     data: buCode
+              //   }
+              // }))
+            }
+          } else {
+            toast.show({
+              placement: "top",
+              render: () => ToastAlert({
+                variant: "left-accent",
+                status: "success",
+                isClosable: true,
+                title: 'Leitura Realizada',
+                description: 'Qr code do boletim foi lido com sucesso',
+              })
+            })
+
+          }
+
+        } else {
+          toast.show({
+            placement: "top",
+            render: () => ToastAlert({
+              variant: "left-accent",
+              status: "error",
+              isClosable: true,
+              title: 'Erro de Leitura',
+              description: 'Erro na leitura ou QRcode corrompido',
+            })
+          })
+        }
+      } catch (err) {
+        toast.show({
+          placement: "top",
+          render: () => ToastAlert({
+            variant: "left-accent",
+            status: "error",
+            isClosable: true,
+            title: 'Erro de Leitura',
+            description: 'Erro na leitura ou QRcode corrompido',
+          })
+        })
+        console.log(err, 'QRcode Reader');
+        throw "Erro ao obter dados do QRcode";
+      }
     }
   }, [barcodes]);
 
@@ -116,7 +225,7 @@ export default function QrScanner() {
                     h="30px"
                     w="30px"
                     m="5px"
-                    bg={qr ? "green.400" : "coolGray.100"}
+                    bg={qr.scanned ? "green.400" : "coolGray.100"}
                     display="flex"
                     justifyContent="center"
                     alignItems="center">
