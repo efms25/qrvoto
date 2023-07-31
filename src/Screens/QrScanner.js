@@ -12,6 +12,7 @@ import { useScanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
 export default function QrScanner() {
   const navigation = useNavigation();
   const [flash, setFlash] = useState(false);
+  const [qrCodes, setQrCodes] = useState([])
   const [cameraPermission, setCameraPermission] = useState();
 
   const devices = useCameraDevices();
@@ -80,7 +81,24 @@ export default function QrScanner() {
             />
           </HStack>
         </Box>
-        <Box w="100%" h={Dimensions.get('window').height * 0.65 - 60}></Box>
+        <Box w="100%" h={Dimensions.get('window').height * 0.65 - 60} display="flex" justifyContent={'flex-end'}>
+          <HStack w="100%" h={((Dimensions.get('window').width * 0.5) - 10)}>
+            <Box w={(Dimensions.get('window').width * 0.5) - 10}>
+              <Box h="30%" w="30%" borderTopWidth={"4px"} borderLeftWidth={"4px"} roundedTopLeft="4px" borderColor={"coolGray.100"} />
+            </Box>
+            <Box w={(Dimensions.get('window').width * 0.5) - 10} display="flex" alignItems={'flex-end'}>
+              <Box h="30%" w="30%" borderTopWidth={"4px"} borderRightWidth={"4px"} roundedTopRight="4px" borderColor={"coolGray.100"} />
+            </Box>
+          </HStack>
+          <HStack w="100%" h={((Dimensions.get('window').width * 0.5) - 10)}>
+            <Box h={((Dimensions.get('window').width * 0.5) - 10)} w="50%" display="flex" justifyContent={'flex-end'}>
+              <Box h="30%" w="30%" borderBottomWidth={"4px"} borderLeftWidth={"4px"} roundedBottomLeft="4px" borderColor={"coolGray.100"} />
+            </Box>
+            <Box h={((Dimensions.get('window').width * 0.5) - 10)} w="50%" display="flex" alignItems={"flex-end"} justifyContent={'flex-end'}>
+              <Box h="30%" w="30%" borderBottomWidth={"4px"} borderRightWidth={"4px"} roundedBottomRight="4px" borderColor={"coolGray.100"} />
+            </Box>
+          </HStack>
+        </Box>
         <Box
           w="100%"
           h={Dimensions.get('window').height * 0.35}
@@ -88,10 +106,31 @@ export default function QrScanner() {
           justifyContent={'flex-end'}
         >
           <Box rounded="8" shadow={2} bg="coolGray.100" p="15px" m="10px" mb="25px">
-            <Text>Testando para ver se ta tudo certinho </Text>
+            {qrCodes.length > 1 &&
+              <HStack pb="10px" display="flex" justifyContent="center">
+                {qrCodes.map((qr, i) => {
+                  return (<Box
+                    rounded="50"
+                    borderColor={"green.400"}
+                    borderWidth="2px"
+                    h="30px"
+                    w="30px"
+                    m="5px"
+                    bg={qr ? "green.400" : "coolGray.100"}
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center">
+                    {i + 1}
+                  </Box>)
+                })}
+              </HStack>
+            }
+            <Text>
+              Aponte para o QR code do Boletim de Urna, a leitura será automática.
+            </Text>
           </Box>
         </Box>
-      </VStack>
-    </Box>
+      </VStack >
+    </Box >
   );
 }
