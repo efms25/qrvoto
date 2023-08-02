@@ -7,7 +7,6 @@ import { Camera, useCameraDevices } from 'react-native-vision-camera';
 import { useNavigation } from '@react-navigation/native';
 import MCIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import IonIcons from 'react-native-vector-icons/Ionicons';
-import { Toast } from 'react-native-toast-message/lib/src/Toast';
 import { useScanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
 
 
@@ -35,20 +34,20 @@ export default function QrScanner() {
     description,
     isClosable,
     ...rest
-  }) => <Alert maxWidth="100%" alignSelf="center" flexDirection="row" status={status ? status : "info"} variant={variant} {...rest}>
+  }) => <Alert maxWidth="100%" alignSelf="center" flexDirection="row" status={status ? status : "info"} variant={variant || 'solid'} {...rest}>
       <VStack space={1} flexShrink={1} w="100%">
         <HStack flexShrink={1} alignItems="center" justifyContent="space-between">
           <HStack space={2} flexShrink={1} alignItems="center">
             <Alert.Icon />
-            <Text fontSize="md" fontWeight="medium" flexShrink={1} color={variant === "solid" ? "lightText" : variant !== "outline" ? "darkText" : null}>
+            <Text fontSize="md" fontWeight="medium" flexShrink={1} color={variant === "solid" || !variant ? "lightText" : variant !== "outline" ? "darkText" : null}>
               {title}
             </Text>
           </HStack>
-          {isClosable ? <IconButton variant="unstyled" icon={<CloseIcon size="3" />} _icon={{
+          {isClosable ? <IconButton variant="unstyled" icon={<CloseIcon color={variant === "solid" || !variant ? "lightText" : variant !== "outline" ? "darkText" : null} size="3" />} _icon={{
             color: variant === "solid" ? "lightText" : "darkText"
           }} onPress={() => toast.close(id)} /> : null}
         </HStack>
-        <Text px="6" color={variant === "solid" ? "lightText" : variant !== "outline" ? "darkText" : null}>
+        <Text px="6" color={variant === "solid" || !variant ? "lightText" : variant !== "outline" ? "darkText" : null}>
           {description}
         </Text>
       </VStack>
@@ -72,17 +71,6 @@ export default function QrScanner() {
 
           if (qrPerBuTotalQty[1] > 1) {
 
-            toast.show({
-              placement: "top",
-              render: () => ToastAlert({
-                variant: "left-accent",
-                status: "warning",
-                isClosable: true,
-                title: 'ATENÇÃO',
-                description: 'Os dados desse BU são divididos em ' + qrPerBuTotalQty[1] + ' QrCodes, leia todos para salvar o Boletim com sucesso.',
-              })
-            })
-
             let qrArr = []
 
             if (qrCodes.length === 0) {
@@ -93,13 +81,23 @@ export default function QrScanner() {
                 })
               }
               setQrCodes(qrArr)
+              toast.show({
+                placement: "top",
+                render: () => ToastAlert({
+                  isClosable: true,
+                  title: 'ATENÇÃO',
+                  description: 'Os dados desse BU são divididos em ' + qrPerBuTotalQty[1] + ' QrCodes, leia todos para salvar o Boletim com sucesso.',
+                })
+              })
             } else {
-              // setQrCodes(produce(draft => {
-              //   draft[(parseInt(qrPerBuTotalQty[0]) - 1)] = {
-              //     scanned: true,
-              //     data: buCode
-              //   }
-              // }))
+
+              let qrs = [...qrCodes];
+              qrs[[(parseInt(qrPerBuTotalQty[0]) - 1)]] = {
+                scanned: true,
+                data: buCode
+              }
+              setQrCodes(qrs)
+
             }
           } else {
             toast.show({
