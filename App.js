@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { NativeBaseProvider, Text } from 'native-base';
-import { Toast } from 'react-native-toast-message/lib/src/Toast';
+import Toast  from 'react-native-toast-message/lib/index';
 import GlobalContextProvider, {
   GlobalContext,
   useGlobalContext,
