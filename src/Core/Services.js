@@ -1,9 +1,9 @@
 import firestore from '@react-native-firebase/firestore'
 import { Toast } from 'react-native-toast-message/lib/src/Toast';
 import uuid from 'react-native-uuid'
-import { RegexpJobsData, RegexpJobsFirstData, RegxpBUHeader, RegxpBUHeaderPost, RegxpBuHeaderForEachElection, RegxpBuHeaderSA, RegxpBuHeaderSaRed, RegxpBuHeaderVoteRed, RegxpEstablishedPosition, RegxpSecurity } from './Regexp';
+import { RegexpJobsData, RegexpJobsFirstData, RegxpBUHeaderPost, RegxpSecurity } from './Regexp';
 import { buExtractHeader, buExtractJobs, buQrCount, buResolution } from './Functions';
-import { ERROR_CANNOT_ADD_ELECTRONIC_URN_WITHOUT_HASH, ERROR_ELETRONICT_URN_ALREADY_EXIST, SUCCESSFULLY_ELECTRONIC_URN_ADDED } from './Constants';
+import { ERROR_CANNOT_ADD_ELECTRONIC_URN_WITHOUT_HASH, ERROR_ELECTRONIC_URN_ALREADY_EXIST, ERROR_QR_CODE_RECEIVE_INVALID, SUCCESSFULLY_ELECTRONIC_URN_ADDED } from './Constants';
 const ElectionsCollection = firestore().collection("Elections");
 const EletronicUrnCollection = firestore().collection("EletronicUrns")
 
@@ -121,13 +121,18 @@ async function addElectrionUrn(input) {
           }
         }
       }
+
+      if (!buResolutionResult.qrBu && !buResolutionResult.hash) {
+        return ERROR_QR_CODE_RECEIVE_INVALID;
+      }
+
       // ---------------------------------------------//
       // Checa se o BU já está cadastrado analisando pelo HASH
       const checkBu = await EletronicUrnCollection
         .where('hash', '==', buResolutionResult.hash).get()
 
       if (checkBu.docs.length > 0) {
-        return ERROR_ELETRONICT_URN_ALREADY_EXIST
+        return ERROR_ELECTRONIC_URN_ALREADY_EXIST
       } else {
         //Parse para INPUT com um(1) QRCode
         if (input.length === 1) {
@@ -182,11 +187,11 @@ async function addElectrionUrn(input) {
       buContentData.jobData.forEach(item => {
         Object.keys(item).forEach(val => {
           if (/[0-9]+/.test(val)) {
-            if(!candidatesNames.includes(val)){
+            if (!candidatesNames.includes(val)) {
               candidatesNames.push({
-              number: val,
-              name: ""
-            })
+                number: val,
+                name: ""
+              })
             }
           }
         })

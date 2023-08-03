@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ElectionList, Login, Poll, QrScanner } from '../Screens';
+import { ElectionList, Login, Poll, Processor, QrScanner } from '../Screens';
 import { useAuthContext } from '../Contexts/AuthContext';
 
 const Stack = createNativeStackNavigator();
@@ -37,6 +37,13 @@ function Router() {
               component={QrScanner}
               options={{
                 title: 'Leitor de Qr code',
+              }}
+            />
+            <Stack.Screen
+              name="Processor"
+              component={Processor}
+              options={{
+                title: 'Processador de Qr code',
               }}
             />
           </>

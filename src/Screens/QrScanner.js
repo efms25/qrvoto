@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import MCIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import IonIcons from 'react-native-vector-icons/Ionicons';
 import { useScanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
+import { addElectrionUrn } from '../Core/Services';
 
 
 
@@ -142,6 +143,36 @@ export default function QrScanner() {
     }
   }, [barcodes]);
 
+  useEffect(() => {
+    async function submit() {
+      if (qrCodes.length > 0) {
+        let readyForProcess = true
+        for (const qrCodeObj of qrCodes) {
+          if (!qrCodeObj.scanned) {
+            return readyForProcess = false
+          }
+        }
+
+        if (readyForProcess) {
+          navigation.navigate("Processor", {
+            buData: qrCodes.map(qrCode => qrCode.data)
+          })
+        }
+      }
+    }
+    submit().catch((e) => {
+      toast.show({
+        placement: 'top',
+        render: ToastAlert({
+          isClosable: true,
+          description: "Ocorreu um erro no processamneto do QrCode.",
+          title: "ERRO DE LEITURA",
+          variant: 'error',
+        })
+      })
+    })
+  }, [qrCodes])
+
   if (device == null) return <Text>Loading</Text>;
   return (
     <Box w="100%" h="100%">
@@ -155,14 +186,14 @@ export default function QrScanner() {
       />
       <VStack p="10px">
         <Box bg="white.400" w="100%" maxH="60px">
-          <HStack justifyContent={'space-between'}>
+          <HStack justifyContent={'space-between'}>''
             <IconButton
               icon={<Icon as={IonIcons} name="chevron-back" />}
               size="md"
               borderRadius="full"
               bg="coolGray.800:alpha.20"
               onPress={() => {
-                navigation.goBack();
+                navigation.navigate('Listagem');
               }}
               _icon={{
                 color: 'coolGray.300',
