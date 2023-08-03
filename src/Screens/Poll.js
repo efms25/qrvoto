@@ -120,28 +120,7 @@ export default function Poll() {
               </Center>
             </HStack>
             <Divider bg="muted.300" />
-            <HStack p="10px" justifyContent="center">
-              <Center w="48%" p="10px">
-                <HStack>
-                  <Text color="coolGray.600">Votos Válidos: </Text>
-                  <Text>{pollData.validVotes}</Text>
-                </HStack>
-                <HStack>
-                  <Text color="coolGray.600">Votos Nulos: </Text>
-                  <Text>{pollData.nullVotes}</Text>
-                </HStack>
-              </Center>
-              <Center w="48%" p="10px">
-                <HStack>
-                  <Text color="coolGray.600">Votos em Branco: </Text>
-                  <Text>{pollData.whiteVotes}</Text>
-                </HStack>
-                <HStack>
-                  <Text color="coolGray.600">Quantidade de BUs: </Text>
-                  <Text>{pollData.buQuantity}</Text>
-                </HStack>
-              </Center>
-            </HStack>
+
             <Box p="1">
               <Button bg="green.400" leftIcon={<ArrowDownIcon color="coolGray.100" />}>
                 Baixar Totalizações
@@ -171,6 +150,29 @@ export default function Poll() {
                   <Heading p="10px" fontSize="14px">
                     {nominees.twoDigits.label}
                   </Heading>
+                  <Divider />
+                  <HStack p="10px" justifyContent="center">
+                    <Center w="48%" p="10px">
+                      <HStack>
+                        <Text color="coolGray.600">Votos Válidos: </Text>
+                        <Text>{pollData.validVotes}</Text>
+                      </HStack>
+                      <HStack>
+                        <Text color="coolGray.600">Votos Nulos: </Text>
+                        <Text>{pollData.nullVotes}</Text>
+                      </HStack>
+                    </Center>
+                    <Center w="48%" p="10px">
+                      <HStack>
+                        <Text color="coolGray.600">Votos em Branco: </Text>
+                        <Text>{pollData.whiteVotes}</Text>
+                      </HStack>
+                      <HStack>
+                        <Text color="coolGray.600">Quantidade de BUs: </Text>
+                        <Text>{pollData.buQuantity}</Text>
+                      </HStack>
+                    </Center>
+                  </HStack>
                   <Divider />
                   <HStack p="10px">
                     <Box w="20%">
@@ -237,6 +239,29 @@ export default function Poll() {
                     {nominees.ThreeDigits.label}
                   </Heading>
                   <Divider />
+                  <HStack p="10px" justifyContent="center">
+                    <Center w="48%" p="10px">
+                      <HStack>
+                        <Text color="coolGray.600">Votos Válidos: </Text>
+                        <Text>{pollData.validVotes}</Text>
+                      </HStack>
+                      <HStack>
+                        <Text color="coolGray.600">Votos Nulos: </Text>
+                        <Text>{pollData.nullVotes}</Text>
+                      </HStack>
+                    </Center>
+                    <Center w="48%" p="10px">
+                      <HStack>
+                        <Text color="coolGray.600">Votos em Branco: </Text>
+                        <Text>{pollData.whiteVotes}</Text>
+                      </HStack>
+                      <HStack>
+                        <Text color="coolGray.600">Quantidade de BUs: </Text>
+                        <Text>{pollData.buQuantity}</Text>
+                      </HStack>
+                    </Center>
+                  </HStack>
+                  <Divider />
                   <HStack p="10px">
                     <Box w="20%">
                       <Text bold color="coolGray.600">
@@ -302,6 +327,29 @@ export default function Poll() {
                     {nominees.fourDigits.label}
                   </Heading>
                   <Divider />
+                  <HStack p="10px" justifyContent="center">
+                    <Center w="48%" p="10px">
+                      <HStack>
+                        <Text color="coolGray.600">Votos Válidos: </Text>
+                        <Text>{pollData.validVotes}</Text>
+                      </HStack>
+                      <HStack>
+                        <Text color="coolGray.600">Votos Nulos: </Text>
+                        <Text>{pollData.nullVotes}</Text>
+                      </HStack>
+                    </Center>
+                    <Center w="48%" p="10px">
+                      <HStack>
+                        <Text color="coolGray.600">Votos em Branco: </Text>
+                        <Text>{pollData.whiteVotes}</Text>
+                      </HStack>
+                      <HStack>
+                        <Text color="coolGray.600">Quantidade de BUs: </Text>
+                        <Text>{pollData.buQuantity}</Text>
+                      </HStack>
+                    </Center>
+                  </HStack>
+                  <Divider />
                   <HStack p="10px">
                     <Box w="20%">
                       <Text bold color="coolGray.600">
@@ -366,6 +414,29 @@ export default function Poll() {
                   <Heading p="10px" fontSize="14px">
                     {nominees.fiveDigits.label}
                   </Heading>
+                  <Divider />
+                  <HStack p="10px" justifyContent="center">
+                    <Center w="48%" p="10px">
+                      <HStack>
+                        <Text color="coolGray.600">Votos Válidos: </Text>
+                        <Text>{pollData.validVotes}</Text>
+                      </HStack>
+                      <HStack>
+                        <Text color="coolGray.600">Votos Nulos: </Text>
+                        <Text>{pollData.nullVotes}</Text>
+                      </HStack>
+                    </Center>
+                    <Center w="48%" p="10px">
+                      <HStack>
+                        <Text color="coolGray.600">Votos em Branco: </Text>
+                        <Text>{pollData.whiteVotes}</Text>
+                      </HStack>
+                      <HStack>
+                        <Text color="coolGray.600">Quantidade de BUs: </Text>
+                        <Text>{pollData.buQuantity}</Text>
+                      </HStack>
+                    </Center>
+                  </HStack>
                   <Divider />
                   <HStack p="10px">
                     <Box w="20%">

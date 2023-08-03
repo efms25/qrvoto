@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Center, FlatList, Heading, Icon, Fab, Text, Pressable, HStack } from 'native-base';
 import FA5Icons from 'react-native-vector-icons/FontAwesome5';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -6,7 +6,7 @@ import { AppBar } from '../Components';
 import { Button } from 'react-native';
 import { addElectrionUrn } from '../Core/Services';
 
-export default function ElectionList({ navigation }) {
+export default function ElectionList({ navigation, route }) {
   const elections = [
     {
       electionYear: 2023,
@@ -98,7 +98,7 @@ export default function ElectionList({ navigation }) {
         label="Adicionar Pleito"
       /> */}
       <Fab
-        renderInPortal
+        renderInPortal={false}
         shadow={2}
         onPress={handleGoToQrScanner}
         bg="tertiary.500"
