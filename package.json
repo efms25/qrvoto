@@ -16,6 +16,7 @@
     "@react-native-firebase/firestore": "^18.2.0",
     "@react-navigation/native": "^6.1.7",
     "@react-navigation/native-stack": "^6.9.13",
+    "babel-plugin-inline-import": "^3.0.0",
     "native-base": "^3.4.28",
     "react": "18.1.0",
     "react-native": "0.70.6",
@@ -30,7 +31,8 @@
     "react-native-uuid": "^2.0.1",
     "react-native-vector-icons": "^9.2.0",
     "react-native-vision-camera": "^2.15.4",
-    "vision-camera-code-scanner": "^0.2.0"
+    "vision-camera-code-scanner": "^0.2.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.0/xlsx-0.20.0.tgz"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",

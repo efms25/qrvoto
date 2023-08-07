@@ -1,5 +1,5 @@
 import { Text, Icon, Box, VStack, HStack, IconButton, Alert, useToast, CloseIcon } from 'native-base';
-// import produce from 'immer'
+import { writeFile, writeFileXLSX } from "xlsx";
 import { StyleSheet, Dimensions } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Camera, useCameraDevices } from 'react-native-vision-camera';

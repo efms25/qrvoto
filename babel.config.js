@@ -5,10 +5,10 @@ module.exports = {
       'react-native-reanimated/plugin',
       {
         globals: ['__scanCodes'],
-      },
-      'babel-plugin-inline-import', {
-        "extensions": ['.svg']
       }
     ],
+    'babel-plugin-inline-import', {
+      "extensions": ['.svg']
+    }
   ],
 };
