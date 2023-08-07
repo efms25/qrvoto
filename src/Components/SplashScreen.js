@@ -1,6 +1,8 @@
 import React from 'react';
-import { Center, Spinner, Box, Heading} from 'native-base';
+import { Center, Spinner, Box, Heading, Text } from 'native-base';
 import MCIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import RedCometLogo from './RedCometLogo';
+import { Dimensions } from 'react-native';
 
 function SplashScreen(props) {
 
@@ -15,16 +17,17 @@ function SplashScreen(props) {
                 fontWeight="600"
                 color="coolGray.500"
                 _dark={{
-                    color: 'warmGray.50',
+                    color: 'coolGray.50',
                 }}
             >
                 QR Voto
             </Heading>
             <Center my="10">
-                <Spinner size={50} color="coolGray.500"/>
+                <Spinner size={50} color="coolGray.500" />
                 <Heading mt='3' textAlign={'center'}>{props && props.description}</Heading>
             </Center>
         </Box>
+        <RedCometLogo />
     </Center>)
 
 }

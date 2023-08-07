@@ -284,10 +284,9 @@ export default function Poll({ navigation, route }) {
                                 </Text>
                               </Box>
                               <HStack w="55%" alignItems={'center'} paddingX={'2'}>
-                                <Box w="10%" marginRight={'1.5'}>
+                                <Box w="15%" marginRight={'1.5'}>
                                   <IconButton
                                     icon={<Icon as={MCIcons} name="pencil" />}
-                                    borderRadius="full"
                                     onPress={() => {
                                       setTempNameEditor({
                                         id: item.id,
@@ -336,6 +335,8 @@ export default function Poll({ navigation, route }) {
               election={999}
               zIndex={999}>
               <Pressable
+                zIndex={1}
+                elevation={1}
                 position='absolute'
                 right={7}
                 top={7}

@@ -6,6 +6,9 @@ module.exports = {
       {
         globals: ['__scanCodes'],
       },
+      'babel-plugin-inline-import', {
+        "extensions": ['.svg']
+      }
     ],
   ],
 };
