@@ -1,10 +1,10 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, VStack, Center, Heading, Spinner, Text, HStack, Button } from 'native-base'
 import MCIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ERROR_ELECTRONIC_URN_ALREADY_EXIST, ERROR_ON_WRITE_ELECTRONIC_URN, ERROR_QR_CODE_RECEIVE_INVALID, SUCCESSFULLY_ELECTRONIC_URN_ADDED } from '../Core/Constants';
 import { Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { addElectrionUrn } from '../Core/Services';
 
 function Processor(props) {
@@ -23,6 +23,10 @@ function Processor(props) {
       setStatus('ERROR_INPUT_BU_CANNOT_BY_EMPTY')
     }
   }, [props])
+
+  useFocusEffect(useCallback(() => {
+    setStatus("")
+  },[]))
 
   return (<Box h='100%'>
     <VStack justifyContent={'space-between'} h={'full'}>

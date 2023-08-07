@@ -1,17 +1,20 @@
 import firestore from '@react-native-firebase/firestore'
 import { Toast } from 'react-native-toast-message/lib/src/Toast';
 import uuid from 'react-native-uuid'
-import { RegexpJobsData, RegexpJobsFirstData, RegxpBUHeaderPost, RegxpSecurity } from './Regexp';
+import { RegexpJobsData, RegexpJobsFirstData, RegexpLeftPieceJob, RegxpBUHeaderPost, RegxpSecurity } from './Regexp';
 import { buExtractHeader, buExtractJobs, buQrCount, buResolution } from './Functions';
 import { ERROR_CANNOT_ADD_ELECTRONIC_URN_WITHOUT_HASH, ERROR_ELECTRONIC_URN_ALREADY_EXIST, ERROR_QR_CODE_RECEIVE_INVALID, SUCCESSFULLY_ELECTRONIC_URN_ADDED } from './Constants';
 const ElectionsCollection = firestore().collection("Elections");
 const EletronicUrnCollection = firestore().collection("EletronicUrns")
 
 
-async function getElections() {
-  return await ElectionsCollection.get()
+function getElections() {
+  return ElectionsCollection
 }
 
+function getElectronicUrns() {
+  return EletronicUrnCollection
+}
 
 async function getElection(year, shift) {
   return ElectionsCollection
@@ -35,7 +38,7 @@ async function getElection(year, shift) {
 async function addElections(input) {
   try {
     const dataToSave = {
-      eid: uuid.v4(),
+      uuid: uuid.v4(),
       createdDate: new Date(),
       active: true,
       year: input && input.year || (new Date()).getFullYear(),
@@ -135,15 +138,15 @@ async function addElectrionUrn(input) {
         return ERROR_ELECTRONIC_URN_ALREADY_EXIST
       } else {
         //Parse para INPUT com um(1) QRCode
-        if (input.length === 1) {
-          const content = buExtractHeader(input[0])
-          buContentData = {
-            ...content
-          }
-          //obtem os cargos e seus candidatos
-          const jobs = buExtractJobs(input[0])
-          buContentData.jobData.push(jobs)
-        } else {
+        if (input.length > 0) {
+          //   const content = buExtractHeader(input[0])
+          //   buContentData = {
+          //     ...content
+          //   }
+          //   //obtem os cargos e seus candidatos
+          //   const jobs = buExtractJobs(input[0])
+          //   buContentData.jobData.push(jobs)
+          // } else {
 
           const content = buExtractHeader(input[0])
           buContentData = {
@@ -153,6 +156,17 @@ async function addElectrionUrn(input) {
           let fullConcatData = ""
 
           for (const buData of input) {
+            //Checa fragmento de continuidade do qrcode anterior pelo 
+            //numero do qrbu. Em algumas situações com mais de um QR-CODE
+            //O restante do qrCode anterior pode ser colocado no proximo, logo 
+            //a concatenação precisa obter o restante dos dados antes de pegar
+            //o proximo cargo vindo do RegexpJobsData.
+            if (buQrCount(buData).current > 1) {
+              const getPieceLeft = buData.match(RegexpLeftPieceJob)
+              if (getPieceLeft != null)
+                fullConcatData += getPieceLeft[0] + " "
+            }
+
             const dataJobsRead = buData.match(RegexpJobsData)
             if (dataJobsRead != null) {
               fullConcatData += dataJobsRead[0] + " "
@@ -176,11 +190,13 @@ async function addElectrionUrn(input) {
           for (const piece of listOfItems) {
             const pieceParsed = buResolution(piece)
             if (pieceParsed != null) {
+              //console.log(pieceParsed)
               buContentData.jobData.push(pieceParsed)
             }
           }
         }
       }
+      //console.log(buContentData.jobData)
 
       //Montagem da lista de nomes dos candidatos
       const candidatesNames = []
@@ -219,4 +235,4 @@ async function addElectrionUrn(input) {
   }
 }
 
-export { getElections, addElections, addElectrionUrn }
+export { getElectronicUrns, getElections, addElections, addElectrionUrn }

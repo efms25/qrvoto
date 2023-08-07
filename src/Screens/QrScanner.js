@@ -1,14 +1,13 @@
-import { Text, Icon, Container, Button, Box, VStack, HStack, IconButton, Alert, useToast, CloseIcon } from 'native-base';
+import { Text, Icon, Box, VStack, HStack, IconButton, Alert, useToast, CloseIcon } from 'native-base';
 // import produce from 'immer'
 import { StyleSheet, Dimensions } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Camera, useCameraDevices } from 'react-native-vision-camera';
-import { useNavigation } from '@react-navigation/native';
-import MCIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import IonIcons from 'react-native-vector-icons/Ionicons';
 import { useScanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
-import { addElectrionUrn } from '../Core/Services';
+import { buQrCount } from '../Core/Functions';
+import SplashScreen from '../Components/SplashScreen'
 
 
 
@@ -54,6 +53,12 @@ export default function QrScanner() {
       </VStack>
     </Alert>;
 
+  //O React-Navigation nunca desmonta os componentes, logo precisa de cleanup
+  useFocusEffect(useCallback(() => {
+    setQrCodes([])
+    setFlash(false)
+  }, []))
+
 
   useEffect(() => {
     (async () => {
@@ -63,68 +68,61 @@ export default function QrScanner() {
   }, []);
 
   useEffect(() => {
-
     if (barcodes.length) {
       try {
         if (barcodes && barcodes[0] && barcodes[0].displayValue) {
+          //Informações a serem processadas vindo da leitura do BU
           const buCode = barcodes[0].displayValue;
-          const qrPerBuTotalQty = buCode.split("QRBU:")[1].split(" ")[0].split(':');
+          const buQntInfo = buQrCount(buCode);
+          if (buQntInfo != null) {
 
-          if (qrPerBuTotalQty[1] > 1) {
-
-            let qrArr = []
-
-            if (qrCodes.length === 0) {
-              for (let i = 0; i < parseInt(qrPerBuTotalQty[1]); i++) {
-                qrArr.push({
-                  scanned: (parseInt(qrPerBuTotalQty[0]) - 1) === i,
-                  data: (parseInt(qrPerBuTotalQty[0]) - 1) === i && buCode
+            if (buQntInfo.total > 1 && qrCodes.length === 0) {
+              if (!toast.isActive('infoQrBu')) {
+                toast.show({
+                  id: 'infoQrBu',
+                  placement: "top",
+                  render: () => ToastAlert({
+                    isClosable: true,
+                    title: 'ATENÇÃO',
+                    description: 'Este BU está divido em: ' + buQntInfo.total + ' partes, leia todos as partes para processar o BU.',
+                  })
                 })
               }
-              setQrCodes(qrArr)
-              toast.show({
-                placement: "top",
-                render: () => ToastAlert({
-                  isClosable: true,
-                  title: 'ATENÇÃO',
-                  description: 'Os dados desse BU são divididos em ' + qrPerBuTotalQty[1] + ' QrCodes, leia todos para salvar o Boletim com sucesso.',
-                })
-              })
-            } else {
+            }
 
-              let qrs = [...qrCodes];
-              qrs[[(parseInt(qrPerBuTotalQty[0]) - 1)]] = {
+            if (qrCodes.length === 0) {
+              let listOFQrs = []
+              for (let i = 0; i < buQntInfo.total; i++) {
+                listOFQrs.push({
+                  scanned: (buQntInfo.current - 1) === i,
+                  data: (buQntInfo.current - 1) === i && buCode
+                })
+              }
+              setQrCodes(listOFQrs)
+            } else {
+              let newQrContent = [...qrCodes]
+              newQrContent[buQntInfo.current - 1] = {
                 scanned: true,
                 data: buCode
               }
-              setQrCodes(qrs)
-
+              setQrCodes(newQrContent)
             }
-          } else {
+          }
+        } else {
+          if (!toast.isActive('infoQrBu')) {
             toast.show({
+              id: 'infoQrBu',
               placement: "top",
               render: () => ToastAlert({
                 variant: "left-accent",
-                status: "success",
+                status: "error",
                 isClosable: true,
-                title: 'Leitura Realizada',
-                description: 'Qr code do boletim foi lido com sucesso',
+                title: 'Erro de Leitura',
+                description: 'Não foi possível obter as informações QrCode lido.',
               })
             })
-
           }
 
-        } else {
-          toast.show({
-            placement: "top",
-            render: () => ToastAlert({
-              variant: "left-accent",
-              status: "error",
-              isClosable: true,
-              title: 'Erro de Leitura',
-              description: 'Erro na leitura ou QRcode corrompido',
-            })
-          })
         }
       } catch (err) {
         toast.show({
@@ -137,16 +135,16 @@ export default function QrScanner() {
             description: 'Erro na leitura ou QRcode corrompido',
           })
         })
-        console.log(err, 'QRcode Reader');
-        throw "Erro ao obter dados do QRcode";
+        console.log(err, 'QRcode Reader err');
       }
     }
-  }, [barcodes]);
+  }, [barcodes, buQrCount]);
 
   useEffect(() => {
     async function submit() {
+      let readyForProcess = true
       if (qrCodes.length > 0) {
-        let readyForProcess = true
+
         for (const qrCodeObj of qrCodes) {
           if (!qrCodeObj.scanned) {
             return readyForProcess = false
@@ -159,6 +157,8 @@ export default function QrScanner() {
           })
         }
       }
+
+
     }
     submit().catch((e) => {
       toast.show({
@@ -173,7 +173,7 @@ export default function QrScanner() {
     })
   }, [qrCodes])
 
-  if (device == null) return <Text>Loading</Text>;
+  if (device == null) return (<SplashScreen />);
   return (
     <Box w="100%" h="100%">
       <Camera
@@ -186,7 +186,7 @@ export default function QrScanner() {
       />
       <VStack p="10px">
         <Box bg="white.400" w="100%" maxH="60px">
-          <HStack justifyContent={'space-between'}>''
+          <HStack justifyContent={'space-between'}>
             <IconButton
               icon={<Icon as={IonIcons} name="chevron-back" />}
               size="md"
@@ -263,9 +263,7 @@ export default function QrScanner() {
                 })}
               </HStack>
             }
-            <Text>
-              Aponte para o QR code do Boletim de Urna, a leitura será automática.
-            </Text>
+            <Text>Aponte para o QR code do Boletim de Urna, a leitura será automática.</Text>
           </Box>
         </Box>
       </VStack >

@@ -14,7 +14,7 @@ function AuthProvider(props) {
     const checkLogged = useCallback(async () => {
         const result = await retrieveDataEncrypted('session') != null
         setIsLogged(result)
-        setLoading(true)
+
     }, [retrieveDataEncrypted])
 
     const valueProvider = useMemo(() => ({
@@ -34,6 +34,10 @@ function AuthProvider(props) {
     useEffect(() => {
         checkLogged()
     }, [])
+
+    useEffect(() => {
+        setLoading(true)
+    }, [isLogged])
 
     return (<AuthContext.Provider value={valueProvider}>
         {children}
