@@ -3,6 +3,7 @@ package com.qrvotonew;
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.ReactRootView;
+import com.rnfs.RNFSPackage; // <------- add package
 
 public class MainActivity extends ReactActivity {
 

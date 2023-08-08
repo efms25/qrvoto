@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Dimensions, Pressable, useColorScheme } from 'react-native';
+import { PermissionsAndroid, Dimensions, Pressable, useColorScheme } from 'react-native';
 import {
   Text,
   Box,
@@ -16,13 +16,18 @@ import {
   FormControl,
   Input,
   VStack,
-  useToast
+  useToast,
+  CloseIcon
 } from 'native-base';
 import MCIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import * as XLSX from 'xlsx';
 import { AppBar, SplashScreen } from '../Components';
 import { getElections, getElectronicUrns } from '../Core/Services';
 import { JobNames } from '../Core/Constants';
 import ToastAlert from '../Components/ToastAlert';
+import { writeFile, DownloadDirectoryPath, mkdir } from "react-native-fs";
+
+const BU_SHEETS_PATH = DownloadDirectoryPath + "/qrvoto";
 
 export default function Poll({ navigation, route }) {
   const colorMode = useColorScheme()
@@ -33,6 +38,7 @@ export default function Poll({ navigation, route }) {
   const [nameModal, setNameModal] = useState(false);
   const [totalBus, setTotalBus] = useState(0);
   //
+
   const [pollData, setPollData] = useState({ year: '0', turn: '1' })
   const [jobData, setJobData] = useState([])
   const [tempNameEditor, setTempNameEditor] = useState({
@@ -126,6 +132,75 @@ export default function Poll({ navigation, route }) {
     }
   }, [params, getElectronicUrns])
 
+  const handleGenerateFile = async () => {
+    let rows = [
+      { name: "George Washington", birthday: "1732-02-22" },
+      { name: "John Adams", birthday: "1735-10-19" },
+    ]
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Dates");
+
+    /* fix headers */
+    XLSX.utils.sheet_add_aoa(worksheet, [["Name", "Birthday"]], { origin: "A1" });
+
+    /* calculate column width */
+    const max_width = rows.reduce((w, r) => Math.max(w, r.name.length), 10);
+    worksheet["!cols"] = [{ wch: max_width }];
+
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      {
+        title: "Permission",
+        message: "Permissão de leitura é necessária."
+      }
+    );
+
+    if (granted) {
+
+      mkdir(BU_SHEETS_PATH).catch((error) => { console.log(error) })
+
+      /* create an XLSX file and try to save to Presidents.xlsx */
+      const bstr = XLSX.write(workbook, { type: 'binary', bookType: "xlsx" });
+      try {
+        const writeRes = await writeFile(BU_SHEETS_PATH + "/president.xlsx", bstr, "ascii")
+
+      } catch (err) {
+        if (!toast.isActive('infoQrBu')) {
+          toast.show({
+            id: 'infoQrBu',
+            placement: "top",
+            render: () => ToastAlert({
+              toastInstance: toast,
+              variant: "left-accent",
+              status: "error",
+              isClosable: true,
+              title: 'Erro de Validação',
+              description: 'Ocorreu um erro na escrita da planilha, tente novamente mais tarde.',
+            })
+          })
+        }
+        console.log(err, 'write err')
+      }
+    } else {
+      toast.show({
+        id: 'infoQrBu',
+        placement: "top",
+        render: () => ToastAlert({
+          toastInstance: toast,
+          variant: "left-accent",
+          status: "error",
+          isClosable: true,
+          title: 'Erro de Validação',
+          description: 'A permissão de acesso ao storage é necessária para a criação da planilha.',
+        })
+      })
+
+    }
+
+  }
+
   const submit = useCallback(async (data) => {
     try {
       if (data.name === '') {
@@ -207,7 +282,7 @@ export default function Poll({ navigation, route }) {
                   <Divider bg="muted.300" />
 
                   <Box p="1">
-                    <Button bg="green.400" leftIcon={<ArrowDownIcon color='coolGray.50' />}>
+                    <Button bg="green.400" leftIcon={<ArrowDownIcon color='coolGray.50' />} onPress={handleGenerateFile}>
                       Baixar Totalizações
                     </Button>
                   </Box>
@@ -323,7 +398,7 @@ export default function Poll({ navigation, route }) {
               </ScrollView>
             </Box>
             {nameModal && <Box
-              background={colorMode === 'dark' ? 'coolGray.800' : 'coolGray.50'}
+              background={'coolGray.50'}
               w="100%"
               maxH={'100%'}
               minH={Dimensions.get('window').height - (Dimensions.get('window').height * 58 / 100)}
@@ -341,7 +416,7 @@ export default function Poll({ navigation, route }) {
                 right={7}
                 top={7}
                 onPress={() => setNameModal(false)}>
-                <MCIcons name='close' size={30} />
+                <CloseIcon />
               </Pressable>
               <VStack justifyContent={'space-between'} h={'100%'}>
                 <Heading >Nome do candidato</Heading>
