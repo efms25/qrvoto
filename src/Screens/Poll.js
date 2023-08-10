@@ -34,6 +34,7 @@ export default function Poll({ navigation, route }) {
   const toast = useToast()
   const { params } = route
   const [loading, setLoading] = useState(true)
+  const [loadingSheetGeneration, setLoadingSheetGeneration] = useState(false)
   const [status, setStatus] = useState('OK')
   const [nameModal, setNameModal] = useState(false);
   const [totalBus, setTotalBus] = useState(0);
@@ -133,21 +134,64 @@ export default function Poll({ navigation, route }) {
   }, [params, getElectronicUrns])
 
   const handleGenerateFile = async () => {
-    let rows = [
-      { name: "George Washington", birthday: "1732-02-22" },
-      { name: "John Adams", birthday: "1735-10-19" },
-    ]
+    setLoadingSheetGeneration(true);
+
+    let candidatesData = jobData.map(jd => {
+      return jd.candidates.map(c => {
+        return {
+          [jd.carg + '-number']: c.number,
+          [jd.carg + '-name']: c.name,
+          [jd.carg + '-numberOfVotes']: c.numberOfVotes,
+        }
+      })
+    })
+
+    let longerIndex = candidatesData
+      .map(a => a.length)
+      .indexOf(Math.max(...candidatesData.map(a => a.length)));
+
+
+
+    let rows = [{}]
+    for (let i = 0; i < candidatesData[longerIndex].length; i++) {
+      let row = {};
+      for (let j = 0; j < candidatesData.length; j++) {
+        if (candidatesData[j] && candidatesData[j][i]) {
+          row = Object.assign({ ...candidatesData[j][i] }, row)
+        }
+      }
+      rows.push(row);
+    }
+    /* fix headers */
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Dates");
 
-    /* fix headers */
-    XLSX.utils.sheet_add_aoa(worksheet, [["Name", "Birthday"]], { origin: "A1" });
 
-    /* calculate column width */
-    const max_width = rows.reduce((w, r) => Math.max(w, r.name.length), 10);
-    worksheet["!cols"] = [{ wch: max_width }];
+    let topTitle = [];
+    let bottomTitle = [];
+
+    jobData.forEach(jd => {
+      topTitle = [JobNames[jd.carg], JobNames[jd.carg], JobNames[jd.carg], ...topTitle];
+      bottomTitle = [...bottomTitle, "Número", "Nome", "Votos"];
+    })
+
+    XLSX.utils.sheet_add_aoa(worksheet, [topTitle, bottomTitle], { origin: "A1" });
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "GERAL");
+
+    let merge = jobData.map((j, i) => {
+      const endIndex = i + 1;
+
+      let sc = i === 0 ? 0 : ((3 * i))
+      let se = (endIndex * 3) - 1;
+      return {
+        s: { r: 0, c: sc },
+        e: { r: 0, c: se }
+      }
+    })
+    worksheet['!merges'] = merge;
+
 
     const granted = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
@@ -164,7 +208,11 @@ export default function Poll({ navigation, route }) {
       /* create an XLSX file and try to save to Presidents.xlsx */
       const bstr = XLSX.write(workbook, { type: 'binary', bookType: "xlsx" });
       try {
-        const writeRes = await writeFile(BU_SHEETS_PATH + "/president.xlsx", bstr, "ascii")
+        writeFile(BU_SHEETS_PATH + "/pleito_" + pollData['year'] + "_turno_" + pollData['turn'] + ".xlsx", bstr, "ascii")
+          .then(() => {
+            setLoadingSheetGeneration(false);
+            navigation.navigate("SheetGenerated")
+          })
 
       } catch (err) {
         if (!toast.isActive('infoQrBu')) {
@@ -250,234 +298,238 @@ export default function Poll({ navigation, route }) {
     }
 
   }, [])
+  if (loadingSheetGeneration) {
+    return <SplashScreen description="Coletando dados e gerando planilha" />
+  } else {
+    return (
+      loading
+        ? <SplashScreen description="Carregando Dados dos BUs" />
+        : <Box w='full' h='full'>
+          <AppBar pageName={`Eleições ${pollData.year}`} backButton />
 
-  return (
-    loading
-      ? <SplashScreen description="Carregando Dados dos BUs" />
-      : <Box w='full' h='full'>
-        <AppBar pageName={`Eleições ${pollData.year}`} backButton />
+          {status === 'OK'
+            ? <Box w='full' h='full' position={'relative'}>
+              <Center>
+                <Box p="1">
+                  <Box rounded="8" shadow={2} bg="coolGray.100">
+                    <HStack p="10px" justifyContent="space-between">
+                      <Center w="48%" p="10px">
+                        <Text fontSize="11px" color="coolGray.600">
+                          Ano do Pleito
+                        </Text>
+                        <Text fontSize="34px">{pollData.year}</Text>
+                      </Center>
+                      <Center w="48%" p="10px">
+                        <Text fontSize="11px" color="coolGray.600">
+                          Turno
+                        </Text>
+                        <Text fontSize="34px">{pollData.turn}º</Text>
+                      </Center>
+                    </HStack>
+                    <HStack>
+                      <Heading w='full' m='2' textTransform={'uppercase'} size={'sm'} textAlign='center' color="coolGray.600">Quantidade de BUs: {totalBus}</Heading>
+                    </HStack>
+                    <Divider bg="muted.300" />
 
-        {status === 'OK'
-          ? <Box w='full' h='full' position={'relative'}>
-            <Center>
-              <Box p="1">
-                <Box rounded="8" shadow={2} bg="coolGray.100">
-                  <HStack p="10px" justifyContent="space-between">
-                    <Center w="48%" p="10px">
-                      <Text fontSize="11px" color="coolGray.600">
-                        Ano do Pleito
-                      </Text>
-                      <Text fontSize="34px">{pollData.year}</Text>
-                    </Center>
-                    <Center w="48%" p="10px">
-                      <Text fontSize="11px" color="coolGray.600">
-                        Turno
-                      </Text>
-                      <Text fontSize="34px">{pollData.turn}º</Text>
-                    </Center>
-                  </HStack>
-                  <HStack>
-                    <Heading w='full' m='2' textTransform={'uppercase'} size={'sm'} textAlign='center' color="coolGray.600">Quantidade de BUs: {totalBus}</Heading>
-                  </HStack>
-                  <Divider bg="muted.300" />
-
-                  <Box p="1">
-                    <Button bg="green.400" leftIcon={<ArrowDownIcon color='coolGray.50' />} onPress={handleGenerateFile}>
-                      Baixar Totalizações
-                    </Button>
+                    <Box p="1">
+                      <Button bg="green.400" leftIcon={<ArrowDownIcon color='coolGray.50' />} onPress={handleGenerateFile}>
+                        Baixar Totalizações
+                      </Button>
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            </Center>
-            <Box p="10px">
-              <Heading p="10px" color="coolGray.600">
-                Candidados
-              </Heading>
-              <ScrollView horizontal>
-                <HStack>
-                  {/* BOX DE CANDIDATO */}
-                  {jobData && jobData.map((item) => {
-                    return (<Box
-                      key={item.carg}
-                      rounded="8"
-                      w={`${Dimensions.get('window').width * 0.915}px`}
-                      mr="10px"
-                      mb="10px"
-                      shadow={2}
-                      h={`${Dimensions.get('window').width * 1.2}px`}
-                      bg="coolGray.100"
-                    >
-                      <Heading p="10px" fontSize="14px">
-                        {JobNames[item.carg]}
-                      </Heading>
-                      <Divider />
-                      <VStack p="10px" justifyContent="center">
-                        <HStack>
-                          <Text color="coolGray.600">Votos Válidos: </Text>
-                          <Text>{item.totalValidVotes}</Text>
-                        </HStack>
+              </Center>
+              <Box p="10px">
+                <Heading p="10px" color="coolGray.600">
+                  Candidatos
+                </Heading>
+                <ScrollView horizontal>
+                  <HStack>
+                    {/* BOX DE CANDIDATO */}
+                    {jobData && jobData.map((item) => {
+                      return (<Box
+                        key={item.carg}
+                        rounded="8"
+                        w={`${Dimensions.get('window').width * 0.915}px`}
+                        mr="10px"
+                        mb="10px"
+                        shadow={2}
+                        h={`${Dimensions.get('window').width * 1.2}px`}
+                        bg="coolGray.100"
+                      >
+                        <Heading p="10px" fontSize="14px">
+                          {JobNames[item.carg]}
+                        </Heading>
+                        <Divider />
+                        <VStack p="10px" justifyContent="center">
+                          <HStack>
+                            <Text color="coolGray.600">Votos Válidos: </Text>
+                            <Text>{item.totalValidVotes}</Text>
+                          </HStack>
 
-                        <HStack>
-                          <Text color="coolGray.600">Votos Nulos: </Text>
-                          <Text>{item.totalNullVotes}</Text>
-                        </HStack>
-                        <HStack>
-                          <Text color="coolGray.600">Votos em Branco: </Text>
-                          <Text>{item.totalWhiteVotes}</Text>
-                        </HStack>
+                          <HStack>
+                            <Text color="coolGray.600">Votos Nulos: </Text>
+                            <Text>{item.totalNullVotes}</Text>
+                          </HStack>
+                          <HStack>
+                            <Text color="coolGray.600">Votos em Branco: </Text>
+                            <Text>{item.totalWhiteVotes}</Text>
+                          </HStack>
 
-                      </VStack>
-                      <Divider />
-                      <HStack p="10px">
-                        <Box w="20%">
-                          <Text bold color="coolGray.600">
-                            Nº
-                          </Text>
-                        </Box>
-                        <Box w="50%">
-                          <Text bold color="coolGray.600">
-                            Nome
-                          </Text>
-                        </Box>
-                        <Box w="30%">
-                          <Text bold color="coolGray.600">
-                            Votos
-                          </Text>
-                        </Box>
-                      </HStack>
-                      <Divider />
-                      <FlatList
-                        maxH="260px"
-                        data={item.candidates}
-                        renderItem={({ item: candidate, index }) => {
+                        </VStack>
+                        <Divider />
+                        <HStack p="10px">
+                          <Box w="20%">
+                            <Text bold color="coolGray.600">
+                              Nº
+                            </Text>
+                          </Box>
+                          <Box w="50%">
+                            <Text bold color="coolGray.600">
+                              Nome
+                            </Text>
+                          </Box>
+                          <Box w="30%">
+                            <Text bold color="coolGray.600">
+                              Votos
+                            </Text>
+                          </Box>
+                        </HStack>
+                        <Divider />
+                        <FlatList
+                          maxH="260px"
+                          data={item.candidates}
+                          renderItem={({ item: candidate, index }) => {
 
-                          return (
-                            <HStack p="10px" key={candidate.number}>
-                              <Box w="15%">
-                                <Text bold color="coolGray.600">
-                                  {candidate.number || ""}
-                                </Text>
-                              </Box>
-                              <HStack w="55%" alignItems={'center'} paddingX={'2'}>
-                                <Box w="15%" marginRight={'1.5'}>
-                                  <IconButton
-                                    icon={<Icon as={MCIcons} name="pencil" />}
-                                    onPress={() => {
-                                      setTempNameEditor({
-                                        id: item.id,
-                                        carg: item.carg,
-                                        idx: index,
-                                        number: candidate.number,
-                                        name: candidate.name
-                                      })
-                                      setNameModal(true)
-                                    }}
-                                  />
-                                </Box>
-                                <Box w="90%">
+                            return (
+                              <HStack p="10px" key={candidate.number}>
+                                <Box w="15%">
                                   <Text bold color="coolGray.600">
-                                    {candidate.name || 'Não Definido.'}
+                                    {candidate.number || ""}
+                                  </Text>
+                                </Box>
+                                <HStack w="55%" alignItems={'center'} paddingX={'2'}>
+                                  <Box w="15%" marginRight={'1.5'}>
+                                    <IconButton
+                                      icon={<Icon as={MCIcons} name="pencil" />}
+                                      onPress={() => {
+                                        setTempNameEditor({
+                                          id: item.id,
+                                          carg: item.carg,
+                                          idx: index,
+                                          number: candidate.number,
+                                          name: candidate.name
+                                        })
+                                        setNameModal(true)
+                                      }}
+                                    />
+                                  </Box>
+                                  <Box w="90%">
+                                    <Text bold color="coolGray.600">
+                                      {candidate.name || 'Não Definido.'}
+                                    </Text>
+                                  </Box>
+                                </HStack>
+
+                                <Box w="30%">
+                                  <Text bold color="coolGray.600">
+                                    {new Intl.NumberFormat('pt-BR').format(candidate.numberOfVotes)}
                                   </Text>
                                 </Box>
                               </HStack>
+                            )
+                          }}
+                        />
+                      </Box>)
+                    })}
 
-                              <Box w="30%">
-                                <Text bold color="coolGray.600">
-                                  {new Intl.NumberFormat('pt-BR').format(candidate.numberOfVotes)}
-                                </Text>
-                              </Box>
-                            </HStack>
-                          )
+                    {/* END BOX DE CANDIDATO */}
+                  </HStack>
+                </ScrollView>
+              </Box>
+              {nameModal && <Box
+                background={'coolGray.50'}
+                w="100%"
+                maxH={'100%'}
+                minH={Dimensions.get('window').height - (Dimensions.get('window').height * 58 / 100)}
+                paddingY={'3'}
+                paddingX={'3'}
+                position={'absolute'}
+                left={'0'}
+                bottom={Dimensions.get('screen').height - (Dimensions.get('screen').height * 92 / 100)}
+                election={999}
+                zIndex={999}>
+                <Pressable
+                  zIndex={1}
+                  elevation={1}
+                  position='absolute'
+                  right={7}
+                  top={7}
+                  onPress={() => setNameModal(false)}>
+                  <CloseIcon />
+                </Pressable>
+                <VStack justifyContent={'space-between'} h={'100%'}>
+                  <Heading >Nome do candidato</Heading>
+                  <Box>
+                    <FormControl>
+                      <FormControl.Label>Nome</FormControl.Label>
+                      <Input value={tempNameEditor.name} onChangeText={(txt) => {
+                        setTempNameEditor(val => ({
+                          ...val,
+                          name: txt
+                        }))
+                      }} />
+                    </FormControl>
+                  </Box>
+                  <Box alignItems={'flex-end'}>
+                    <Button.Group space={2}>
+                      <Button
+                        variant="ghost"
+                        colorScheme="blueGray"
+                        onPress={() => {
+                          setNameModal(false);
                         }}
-                      />
-                    </Box>)
-                  })}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        onPress={() => {
+                          const jIx = jobData.findIndex(jj => jj.carg === tempNameEditor.carg)
+                          if (jIx > -1) {
+                            console.log(jobData[jIx])
+                            const cni = jobData[jIx].candidates.findIndex(cn => cn.number === tempNameEditor.number)
+                            if (cni > -1) {
+                              jobData[jIx].candidates[cni].name = tempNameEditor.name
 
-                  {/* END BOX DE CANDIDATO */}
-                </HStack>
-              </ScrollView>
-            </Box>
-            {nameModal && <Box
-              background={'coolGray.50'}
-              w="100%"
-              maxH={'100%'}
-              minH={Dimensions.get('window').height - (Dimensions.get('window').height * 58 / 100)}
-              paddingY={'3'}
-              paddingX={'3'}
-              position={'absolute'}
-              left={'0'}
-              bottom={Dimensions.get('screen').height - (Dimensions.get('screen').height * 92 / 100)}
-              election={999}
-              zIndex={999}>
-              <Pressable
-                zIndex={1}
-                elevation={1}
-                position='absolute'
-                right={7}
-                top={7}
-                onPress={() => setNameModal(false)}>
-                <CloseIcon />
-              </Pressable>
-              <VStack justifyContent={'space-between'} h={'100%'}>
-                <Heading >Nome do candidato</Heading>
-                <Box>
-                  <FormControl>
-                    <FormControl.Label>Nome</FormControl.Label>
-                    <Input value={tempNameEditor.name} onChangeText={(txt) => {
-                      setTempNameEditor(val => ({
-                        ...val,
-                        name: txt
-                      }))
-                    }} />
-                  </FormControl>
-                </Box>
-                <Box alignItems={'flex-end'}>
-                  <Button.Group space={2}>
-                    <Button
-                      variant="ghost"
-                      colorScheme="blueGray"
-                      onPress={() => {
-                        setNameModal(false);
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onPress={() => {
-                        const jIx = jobData.findIndex(jj => jj.carg === tempNameEditor.carg)
-                        if (jIx > -1) {
-                          console.log(jobData[jIx])
-                          const cni = jobData[jIx].candidates.findIndex(cn => cn.number === tempNameEditor.number)
-                          if (cni > -1) {
-                            jobData[jIx].candidates[cni].name = tempNameEditor.name
-
-                            submit(tempNameEditor)
+                              submit(tempNameEditor)
+                            }
                           }
-                        }
-                        setNameModal(false);
-                      }}
-                    >
-                      <HStack justifyContent={'center'} alignItems={'center'}>
-                        <MCIcons name='content-save' size={16} color={'white'} />
-                        <Text color={'coolGray.50'} marginLeft={'3'}>Salvar</Text>
-                      </HStack>
+                          setNameModal(false);
+                        }}
+                      >
+                        <HStack justifyContent={'center'} alignItems={'center'}>
+                          <MCIcons name='content-save' size={16} color={'white'} />
+                          <Text color={'coolGray.50'} marginLeft={'3'}>Salvar</Text>
+                        </HStack>
 
 
-                    </Button>
-                  </Button.Group>
-                </Box>
-              </VStack>
+                      </Button>
+                    </Button.Group>
+                  </Box>
+                </VStack>
 
-            </Box>}
-          </Box>
-          : <HStack h='100%' mt='-20' alignItems={'center'} justifyContent={'center'}>
-            <Center>
-              <MCIcons name={status === 'param' ? 'database-eye-off' : "database-off"} size={80} />
-              <Text mt='5' fontSize={'xl'}>{'FALHA NA LEITURA DO BU'}</Text>
-              <Text m='2' textAlign={'center'}>{status === 'param' ? 'O recurso necessário não foi encontrado.' : 'Não foi possível carregar os dados do BU no banco de dados.'}</Text>
-            </Center>
-          </HStack>}
-      </Box>
+              </Box>}
+            </Box>
+            : <HStack h='100%' mt='-20' alignItems={'center'} justifyContent={'center'}>
+              <Center>
+                <MCIcons name={status === 'param' ? 'database-eye-off' : "database-off"} size={80} />
+                <Text mt='5' fontSize={'xl'}>{'FALHA NA LEITURA DO BU'}</Text>
+                <Text m='2' textAlign={'center'}>{status === 'param' ? 'O recurso necessário não foi encontrado.' : 'Não foi possível carregar os dados do BU no banco de dados.'}</Text>
+              </Center>
+            </HStack>}
+        </Box>
 
-  );
+    );
+  }
+
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Center, Spinner, Box, Heading, Text } from 'native-base';
+import { Center, Spinner, Box, Heading, Text, Icon } from 'native-base';
 import MCIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import RedCometLogo from './RedCometLogo';
 import { Dimensions } from 'react-native';
@@ -9,7 +9,12 @@ function SplashScreen(props) {
     return (<Center w="100%" h="100%">
         <Box>
             <Center>
-                <MCIcons name="qrcode-scan" size={80} />
+                <Icon
+                    size={40}
+                    as={MCIcons}
+                    name="qrcode-scan"
+                    color="coolGray.800"
+                />
             </Center>
             <Heading textAlign={'center'}
                 m="5"

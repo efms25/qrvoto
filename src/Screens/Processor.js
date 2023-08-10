@@ -1,6 +1,6 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, VStack, Center, Heading, Spinner, Text, HStack, Button } from 'native-base'
+import { Box, VStack, Center, Heading, Spinner, Text, HStack, Button, Icon } from 'native-base'
 import MCIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ERROR_ELECTRONIC_URN_ALREADY_EXIST, ERROR_ON_WRITE_ELECTRONIC_URN, ERROR_QR_CODE_RECEIVE_INVALID, SUCCESSFULLY_ELECTRONIC_URN_ADDED } from '../Core/Constants';
 import { Pressable } from 'react-native';
@@ -26,14 +26,19 @@ function Processor(props) {
 
   useFocusEffect(useCallback(() => {
     setStatus("")
-  },[]))
+  }, []))
 
   return (<Box h='100%'>
     <VStack justifyContent={'space-between'} h={'full'}>
       <Center flex={'1'}>
         <Heading mt={'10'} size={'md'} textTransform={'uppercase'}>PROCESSANDO BOLETIM DE URNA</Heading>
         <Box my={'10'}>
-          <MCIcons name="qrcode-scan" size={120} />
+          <Icon
+            size={120}
+            as={MCIcons}
+            name="qrcode-scan"
+            color="coolGray.800"
+          />
         </Box>
 
       </Center>
