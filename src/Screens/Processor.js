@@ -125,7 +125,12 @@ function Processor(props) {
                 navigator.push('QrScanner')
               }}>
               <HStack alignItems={'center'}>
-                <MCIcons name='arrow-left' size={20} />
+                <Icon
+                  size={"20px"}
+                  as={MCIcons}
+                  name="arrow-left"
+                  color="coolGray.600"
+                />
                 <Text ml='2'>Voltar</Text>
               </HStack>
             </Button>
@@ -138,7 +143,12 @@ function Processor(props) {
                   navigator.navigate('QrScanner')
                 }}>
                 <HStack alignItems={'center'}>
-                  <MCIcons name='qrcode-scan' size={20} />
+                  <Icon
+                    size={"20px"}
+                    as={MCIcons}
+                    name="qrcode-scan"
+                    color="coolGray.600"
+                  />
                   <Text ml='2'>Cadastrar outro</Text>
                 </HStack>
               </Button>
@@ -148,7 +158,12 @@ function Processor(props) {
                   navigator.navigate('Listagem')
                 }}>
                 <HStack alignItems={'center'}>
-                  <MCIcons name='home' size={20} />
+                  <Icon
+                    size={"20px"}
+                    as={MCIcons}
+                    name="home"
+                    color="coolGray.600"
+                  />
                   <Text ml='2'>Voltar ao Inicio</Text>
                 </HStack>
               </Button>
