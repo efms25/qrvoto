@@ -112,11 +112,6 @@ interface BuContent {
 // FIM DA REFERENCIA
 //----------------------------------------------------------------------//
 
-interface BuCandidatesName{
-    id: string
-    number: number,
-    name: string
-}
 
 interface JobData {
     /** Cabeçalho do cargo – incluído para cada cargo sendo apurado */
@@ -193,10 +188,7 @@ interface EletronicUrn {
     qntBus: number // quantidades de arquivos de bu padrão QRBU:1:n, sendo 'n' a quantidade de qrcodes adicionais
     buRawData: string[]
     buContent: BuContentParsed
-    candidatesName: BuCandidatesName[]
 }
-
-
 
 interface Elections {
     eid: string;
@@ -206,3 +198,11 @@ interface Elections {
     shift: number;
 }
 
+
+interface BuCandidatesName{
+    id: string //identificador do documento.
+    number: number, // numero do candidato
+    name: string //Nome do candidato
+    state: string // Identificador do Estado Federativo
+    eid: string // Identificador do pleito
+}

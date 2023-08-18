@@ -46,7 +46,8 @@ function Processor(props) {
         {status === ''
           ? <Center flex='1'>
             <Spinner color="coolGray.500" size={50} />
-            <Text mt='5'>Processando Dados do BU...</Text>
+            <Text mt='5' fontSize={'xl'} textAlign={'center'}>PROCESSANDO INFORMAÇÕES</Text>
+            <Text mt='5'>O aplicativo está processando as informações recebidas.</Text>
           </Center>
           : status === ERROR_ELECTRONIC_URN_ALREADY_EXIST
             ? <Center flex='1'>
@@ -58,13 +59,13 @@ function Processor(props) {
               ? <Center flex='1'>
                 <MCIcons name='alert-decagram' size={50} />
                 <Text mt='5' fontSize={'xl'} textAlign={'center'}>QR-CODE INSERIDO INVÁLIDO!</Text>
-                <Text mt='2' textAlign={'center'}>O QrCode lido não parece ser um boletim de urna, não é possível continuar.</Text>
+                <Text mt='2' textAlign={'center'}>O QrCode lido parece não ser um boletim de urna, não é possível continuar.</Text>
               </Center>
               : status === ERROR_ON_WRITE_ELECTRONIC_URN
                 ? <Center flex='1'>
                   <MCIcons name='cloud-alert' size={50} />
                   <Text mt='5' fontSize={'xl'} textAlign={'center'}>FALHA NO CADASTRAMENTO DO BU</Text>
-                  <Text mt='2' textAlign={'center'}>O aplicativo não conseguiu salvar o boletim de urna no momento, tente novament em instantes.</Text>
+                  <Text mt='2' textAlign={'center'}>O aplicativo não conseguiu salvar o boletim de urna no momento, tente novamente em instantes.</Text>
                 </Center>
                 : status === SUCCESSFULLY_ELECTRONIC_URN_ADDED
                   ? <Center flex='1'>
@@ -72,12 +73,18 @@ function Processor(props) {
                     <Text mt='5' fontSize={'xl'} textAlign={'center'}>CADASTRADO COM SUCESSO</Text>
                     <Text mt='2' textAlign={'center'}>Boletim de urna cadastrado com sucesso.</Text>
                   </Center>
-                  : <Center flex='1'>
-                    <MCIcons name='alert' size={70} />
-                    <Text mt='5' fontSize={'xl'} textAlign={'center'}>OCORREU UM ERRO DESCONHECIDO</Text>
-                    <Text mt='2' textAlign={'center'}>O Aplicativo não conseguiu processar o pedido</Text>
-                    <Text mt='2' textAlign={'center'} fontSize={'xs'}>Codigo do erro: {status}</Text>
-                  </Center>
+                  : status === ERROR_PERMISSION_DENIED
+                    ? <Center flex='1'>
+                      <MCIcons name='database-remove' size={100} />
+                      <Text mt='5' fontSize={'xl'} textAlign={'center'}>PERMISSÃO NEGADA</Text>
+                      <Text mt='2' textAlign={'center'}>O banco de dados negou a leitura ou escrita de dados.</Text>
+                    </Center>
+                    : <Center flex='1'>
+                      <MCIcons name='alert' size={70} />
+                      <Text mt='5' fontSize={'xl'} textAlign={'center'}>OCORREU UM ERRO DESCONHECIDO</Text>
+                      <Text mt='2' textAlign={'center'}>O Aplicativo não conseguiu processar o pedido!</Text>
+                      <Text mt='2' textAlign={'center'} fontSize={'xs'}>Codigo do erro: {status}</Text>
+                    </Center>
         }
         <HStack mb='10'>
           {status !== '' &&
