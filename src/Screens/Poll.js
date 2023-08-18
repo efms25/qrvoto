@@ -38,7 +38,7 @@ export default function Poll({ navigation, route }) {
   const [status, setStatus] = useState('OK')
   const [nameModal, setNameModal] = useState(false);
   const [totalBus, setTotalBus] = useState(0);
-  //
+  const [buContentByState, setBuContentByState] = useState([])
 
   const [pollData, setPollData] = useState({ year: '0', turn: '1' })
   const [jobData, setJobData] = useState([])
@@ -62,11 +62,53 @@ export default function Poll({ navigation, route }) {
 
       if (dataUrns && dataUrns.docs) {
         const jobsInfo = []
+        let buArr = [];
         for (const urn of dataUrns.docs) {
           const urnContent = urn.data()
           const buContent = urnContent.buContent;
           const candidatesName = urnContent.candidatesName
           const jobs = buContent.jobData
+
+          //Separação de BUs por UF e zona.
+
+          // console.log(buContent, '--buContent')
+
+          const ufIndex = buArr.findIndex(f => {
+            return f.unfe === buContent.unfe
+          })
+
+          if (ufIndex !== -1) {
+
+            const zoneIndex = buArr[ufIndex].zones.findIndex(f => {
+              return f.zoneNumber === buContent.zona
+            })
+            if (zoneIndex !== -1) {
+              buArr[ufIndex].zones[zoneIndex].buContent.push(buContent);
+            } else {
+              buArr[ufIndex].zones.push(
+                {
+                  zoneNumber: buContent.zona,
+                  buContent: [buContent],
+                  candidatesName
+                }
+              )
+
+            }
+
+          } else {
+            buArr.push({
+              unfe: buContent.unfe,
+              zones: [
+                {
+                  zoneNumber: buContent.zona,
+                  buContent: [buContent],
+                  candidatesName
+                }
+              ]
+            })
+          }
+
+
           for (const job of jobs) {
             const idxJob = jobsInfo.findIndex(value => value.carg === job.carg)
             const entries = Object.entries(job)
@@ -120,6 +162,7 @@ export default function Poll({ navigation, route }) {
           }
 
         }
+        setBuContentByState(buArr);
         setJobData(jobsInfo)
         setLoading(false)
       }
@@ -132,6 +175,23 @@ export default function Poll({ navigation, route }) {
       setStatus('param')
     }
   }, [params, getElectronicUrns])
+
+  const getCandidaetesOnlyFromBu = (data) => {
+    const objData = Object.entries(data);
+    let rowObject = []
+
+    objData.forEach(od => {
+      if (/^\d+$/.test(od[0])) {
+        rowObject = { ...rowObject, [od[0]]: parseInt(od[1]) };
+      }
+    })
+
+    if (Object.keys(rowObject).length === 0) {
+      return false;
+    } else {
+      return rowObject
+    }
+  }
 
   const handleGenerateFile = async () => {
     setLoadingSheetGeneration(true);
@@ -177,7 +237,6 @@ export default function Poll({ navigation, route }) {
     })
 
     XLSX.utils.sheet_add_aoa(worksheet, [topTitle, bottomTitle], { origin: "A1" });
-
     XLSX.utils.book_append_sheet(workbook, worksheet, "GERAL");
 
     let merge = jobData.map((j, i) => {
@@ -191,6 +250,114 @@ export default function Poll({ navigation, route }) {
       }
     })
     worksheet['!merges'] = merge;
+
+    // Abas de zona
+    if (buContentByState.length) {
+      let zonesRows = buContentByState.map(buS => {
+        if (buS.zones && buS.zones.length) {
+          let zRowsArr = buS.zones.map(z => {
+            // console.log(z.buContent[0]['jobData'], 'z')
+
+
+            let zoneRowData = [];
+            if (z.buContent && z.buContent.length) {
+              z.buContent.forEach(buC => {
+                if (buC) {
+                  let sectionIndex = -1;
+
+                  if (zoneRowData.length !== 0) {
+                    sectionIndex = zoneRowData.findIndex(f => {
+                      return f.seca === buC.seca
+                    })
+                  }
+
+                  if (sectionIndex === -1 || zoneRowData.length === 0) {
+                    // Primeiro sessão do array da zona
+                    if (buC['jobData']) {
+                      let zrnJobData = {};
+                      buC['jobData'].forEach(jd => {
+                        if (getCandidaetesOnlyFromBu(jd)) {
+                          zrnJobData = { ...zrnJobData, [jd.carg]: getCandidaetesOnlyFromBu(jd) }
+                        }
+                      })
+                      if (Object.keys(zrnJobData).length !== 0) {
+                        zoneRowData.push(
+                          {
+                            seca: buC.seca,
+                            jobData: zrnJobData
+                          }
+                        )
+                      }
+                    }
+                  } else {
+                    // Soma quantidade de votos
+                    buC['jobData'].forEach(jd => {
+                      console.log(jd.carg, 'jd')
+                      if (getCandidaetesOnlyFromBu(jd)) {
+                        Object.entries(getCandidaetesOnlyFromBu(jd)).forEach(jdEntries => {
+                          zoneRowData[sectionIndex].jobData[jd.carg][jdEntries[0]] += jdEntries[1];
+                        })
+                      }
+                    })
+                  }
+                }
+              })
+            }
+            // console.log(buS, 'bus')
+            return {
+              zoneName: buS.unfe + " zona " + z.zoneNumber,
+              zoneResults: zoneRowData,
+              // cadidates: z.candidatesName
+            }
+          })
+
+          return zRowsArr;
+        } else return []
+      })
+      zonesRows = [].concat.apply([], [...zonesRows]);
+
+      zonesRows.forEach(zr => {
+        let tableZoneRows = [];
+        // console.log(zr, 'zr')
+        zr.zoneResults.forEach((zoneResult) => {
+          // console.log(zoneResult, 'result')
+          if (zoneResult.jobData) {
+            Object.entries(zoneResult.jobData).forEach((job) => {
+              Object.entries(job[1]).forEach((jb, jobIndex) => {
+                const candidateNumberIndex = tableZoneRows.findIndex(f => {
+                  return f['0-n'] === jb[0]
+                })
+
+                // if (jobIndex === 0) {
+                //   tableZoneRows.push({ '0-n': JobNames[job[0]] })
+                // }
+
+                if (tableZoneRows.length === 0 || candidateNumberIndex === -1) {
+                  let candidateVoteLine = {
+                    '0-n': jb[0],
+                    '0-name': '',
+                    [zoneResult.seca]: jb[1],
+                    total: jb[1]
+                  }
+                  tableZoneRows.push(candidateVoteLine);
+                } else {
+                  tableZoneRows[candidateNumberIndex] = {
+                    ...tableZoneRows[candidateNumberIndex],
+                    [zoneResult.seca]: jb[1],
+                    total: tableZoneRows[candidateNumberIndex]['total'] + jb[1]
+                  }
+                }
+              })
+            })
+          }
+        })
+        console.log(tableZoneRows, '--tableZoneRows')
+        const worksheetZone = XLSX.utils.json_to_sheet(tableZoneRows);
+        XLSX.utils.book_append_sheet(workbook, worksheetZone, zr.zoneName);
+
+
+      })
+    }
 
 
     const granted = await PermissionsAndroid.request(

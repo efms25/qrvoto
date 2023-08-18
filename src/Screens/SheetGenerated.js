@@ -32,7 +32,7 @@ function SheetGenerated(props) {
                         color="green.600"
                     />
                     <Text mt='5' fontSize={'xl'} textAlign={'center'}>PLANILHA GERADA COM SUCESSO!</Text>
-                    <Text mt='2' textAlign={'center'}>Você pode encontrar a planilha na pasta Qrvoto dentro da pasta downloads. Downlaods -> Qrvoto.</Text>
+                    <Text mt='2' textAlign={'center'}>Você pode encontrar a planilha na pasta Qrvoto dentro da pasta downloads. Downlaods {'->'} Qrvoto.</Text>
                 </Center>
                 <HStack mb='10'>
                     <HStack>

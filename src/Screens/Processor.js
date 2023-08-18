@@ -50,30 +50,55 @@ function Processor(props) {
           </Center>
           : status === ERROR_ELECTRONIC_URN_ALREADY_EXIST
             ? <Center flex='1'>
-              <MCIcons name='alert-circle-check' size={50} />
+              <Icon
+                size={50}
+                as={MCIcons}
+                name="alert-circle-check"
+                color="blue.400"
+              />
               <Text mt='5' fontSize={'xl'} textAlign={'center'}>BOLETIM DE URNA JÁ CADASTRADO!</Text>
               <Text mt='2' textAlign={'center'}>Não é necessário registrar esse BU pois ele já se encontra registrado no sistema.</Text>
             </Center>
             : status === ERROR_QR_CODE_RECEIVE_INVALID
               ? <Center flex='1'>
-                <MCIcons name='alert-decagram' size={50} />
+                <Icon
+                  size={50}
+                  as={MCIcons}
+                  name="alert-decagram"
+                  color="red.400"
+                />
                 <Text mt='5' fontSize={'xl'} textAlign={'center'}>QR-CODE INSERIDO INVÁLIDO!</Text>
                 <Text mt='2' textAlign={'center'}>O QrCode lido não parece ser um boletim de urna, não é possível continuar.</Text>
               </Center>
               : status === ERROR_ON_WRITE_ELECTRONIC_URN
                 ? <Center flex='1'>
-                  <MCIcons name='cloud-alert' size={50} />
+                  <Icon
+                    size={50}
+                    as={MCIcons}
+                    name="cloud-alert"
+                    color="red.400"
+                  />
                   <Text mt='5' fontSize={'xl'} textAlign={'center'}>FALHA NO CADASTRAMENTO DO BU</Text>
                   <Text mt='2' textAlign={'center'}>O aplicativo não conseguiu salvar o boletim de urna no momento, tente novament em instantes.</Text>
                 </Center>
                 : status === SUCCESSFULLY_ELECTRONIC_URN_ADDED
                   ? <Center flex='1'>
-                    <MCIcons name='check-bold' size={100} />
+                    <Icon
+                      size={100}
+                      as={MCIcons}
+                      name="check-bold"
+                      color="green.500"
+                    />
                     <Text mt='5' fontSize={'xl'} textAlign={'center'}>CADASTRADO COM SUCESSO</Text>
                     <Text mt='2' textAlign={'center'}>Boletim de urna cadastrado com sucesso.</Text>
                   </Center>
                   : <Center flex='1'>
-                    <MCIcons name='alert' size={70} />
+                    <Icon
+                      size={70}
+                      as={MCIcons}
+                      name="alert"
+                      color="red.400"
+                    />
                     <Text mt='5' fontSize={'xl'} textAlign={'center'}>OCORREU UM ERRO DESCONHECIDO</Text>
                     <Text mt='2' textAlign={'center'}>O Aplicativo não conseguiu processar o pedido</Text>
                     <Text mt='2' textAlign={'center'} fontSize={'xs'}>Codigo do erro: {status}</Text>
