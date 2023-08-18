@@ -22,8 +22,8 @@ import {
 import MCIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as XLSX from 'xlsx';
 import { AppBar, SplashScreen } from '../Components';
-import { getElections, getElectronicUrns } from '../Core/Services';
-import { JobNames } from '../Core/Constants';
+import { getElections, getElectionsCandidates, getElectronicUrns } from '../Core/Services';
+import { JobNames, SHEET_DIRECTORY_CANNOT_BE_CREATED } from '../Core/Constants';
 import ToastAlert from '../Components/ToastAlert';
 import { writeFile, DownloadDirectoryPath, mkdir } from "react-native-fs";
 
@@ -36,37 +36,46 @@ export default function Poll({ navigation, route }) {
   const [loading, setLoading] = useState(true)
   const [loadingSheetGeneration, setLoadingSheetGeneration] = useState(false)
   const [status, setStatus] = useState('OK')
+  const [sheetStatus, setSheetStatus] = useState('')
   const [nameModal, setNameModal] = useState(false);
   const [totalBus, setTotalBus] = useState(0);
+  const [infoInitialLoad, setInfoInitialLoad] = useState('');
   //
 
   const [pollData, setPollData] = useState({ year: '0', turn: '1' })
   const [jobData, setJobData] = useState([])
   const [tempNameEditor, setTempNameEditor] = useState({
-    id: '',
-    carg: '',
-    idx: -1,
+    cid: '',
+    eid: '',
+    state: '',
     number: 0,
-    name: ""
+    name: '',
+    carg: ''
   })
 
   useEffect(() => {
     async function readBuData() {
+      setInfoInitialLoad("Buscando dados do pleito selecionado.")
       const dataUrns = await getElectronicUrns().where('eid', '==', params.eid).get()
       setTotalBus(dataUrns.size)
       const dataElection = await getElections().doc(params.eid).get()
+      const dataCandidates = await getElectionsCandidates().where('eid', '==', params.eid).get()
       if (dataElection.exists) {
         const election = dataElection.data()
         setPollData({ year: election.year, turn: election.shift })
       }
 
       if (dataUrns && dataUrns.docs) {
+        setInfoInitialLoad("Listando dados.")
         const jobsInfo = []
         for (const urn of dataUrns.docs) {
+          console.log(urn)
           const urnContent = urn.data()
           const buContent = urnContent.buContent;
-          const candidatesName = urnContent.candidatesName
+          const candidatesFilter = dataCandidates.docs.filter(cand => cand.data().state === buContent.unfe);
+          const candidatesName = candidatesFilter.map(i => ({ id: i.id, ...i.data() }));
           const jobs = buContent.jobData
+
           for (const job of jobs) {
             const idxJob = jobsInfo.findIndex(value => value.carg === job.carg)
             const entries = Object.entries(job)
@@ -79,7 +88,9 @@ export default function Poll({ navigation, route }) {
                 if (number.match(/[0-9]+/)) {
                   const nameObj = candidatesName.find(op => op.number === number)
                   candidates.push({
+                    cid: nameObj.id,
                     number: number,
+                    state: nameObj.state,
                     name: nameObj != null ? nameObj.name : "",
                     numberOfVotes: parseInt(votes) || 0
                   })
@@ -136,117 +147,122 @@ export default function Poll({ navigation, route }) {
   const handleGenerateFile = async () => {
     setLoadingSheetGeneration(true);
 
-    let candidatesData = jobData.map(jd => {
-      return jd.candidates.map(c => {
-        return {
-          [jd.carg + '-number']: c.number,
-          [jd.carg + '-name']: c.name,
-          [jd.carg + '-numberOfVotes']: c.numberOfVotes,
-        }
-      })
-    })
-
-    let longerIndex = candidatesData
-      .map(a => a.length)
-      .indexOf(Math.max(...candidatesData.map(a => a.length)));
-
-
-
-    let rows = [{}]
-    for (let i = 0; i < candidatesData[longerIndex].length; i++) {
-      let row = {};
-      for (let j = 0; j < candidatesData.length; j++) {
-        if (candidatesData[j] && candidatesData[j][i]) {
-          row = Object.assign({ ...candidatesData[j][i] }, row)
-        }
-      }
-      rows.push(row);
-    }
-    /* fix headers */
-
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-
-
-    let topTitle = [];
-    let bottomTitle = [];
-
-    jobData.forEach(jd => {
-      topTitle = [JobNames[jd.carg], JobNames[jd.carg], JobNames[jd.carg], ...topTitle];
-      bottomTitle = [...bottomTitle, "Número", "Nome", "Votos"];
-    })
-
-    XLSX.utils.sheet_add_aoa(worksheet, [topTitle, bottomTitle], { origin: "A1" });
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, "GERAL");
-
-    let merge = jobData.map((j, i) => {
-      const endIndex = i + 1;
-
-      let sc = i === 0 ? 0 : ((3 * i))
-      let se = (endIndex * 3) - 1;
-      return {
-        s: { r: 0, c: sc },
-        e: { r: 0, c: se }
-      }
-    })
-    worksheet['!merges'] = merge;
-
-
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      {
-        title: "Permission",
-        message: "Permissão de leitura é necessária."
-      }
-    );
-
-    if (granted) {
-
-      mkdir(BU_SHEETS_PATH).catch((error) => { console.log(error) })
-
-      /* create an XLSX file and try to save to Presidents.xlsx */
-      const bstr = XLSX.write(workbook, { type: 'binary', bookType: "xlsx" });
-      try {
-        writeFile(BU_SHEETS_PATH + "/pleito_" + pollData['year'] + "_turno_" + pollData['turn'] + ".xlsx", bstr, "ascii")
-          .then(() => {
-            setLoadingSheetGeneration(false);
-            navigation.navigate("SheetGenerated")
-          })
-
-      } catch (err) {
-        if (!toast.isActive('infoQrBu')) {
-          toast.show({
-            id: 'infoQrBu',
-            placement: "top",
-            render: () => ToastAlert({
-              toastInstance: toast,
-              variant: "left-accent",
-              status: "error",
-              isClosable: true,
-              title: 'Erro de Validação',
-              description: 'Ocorreu um erro na escrita da planilha, tente novamente mais tarde.',
-            })
-          })
-        }
-        console.log(err, 'write err')
-      }
-    } else {
-      toast.show({
-        id: 'infoQrBu',
-        placement: "top",
-        render: () => ToastAlert({
-          toastInstance: toast,
-          variant: "left-accent",
-          status: "error",
-          isClosable: true,
-          title: 'Erro de Validação',
-          description: 'A permissão de acesso ao storage é necessária para a criação da planilha.',
+    try {
+      let candidatesData = jobData.map(jd => {
+        return jd.candidates.map(c => {
+          return {
+            [jd.carg + '-number']: c.number,
+            [jd.carg + '-name']: c.name,
+            [jd.carg + '-numberOfVotes']: c.numberOfVotes,
+          }
         })
       })
 
-    }
+      let longerIndex = candidatesData
+        .map(a => a.length)
+        .indexOf(Math.max(...candidatesData.map(a => a.length)));
 
+
+
+      let rows = [{}]
+      for (let i = 0; i < candidatesData[longerIndex].length; i++) {
+        let row = {};
+        for (let j = 0; j < candidatesData.length; j++) {
+          if (candidatesData[j] && candidatesData[j][i]) {
+            row = Object.assign({ ...candidatesData[j][i] }, row)
+          }
+        }
+        rows.push(row);
+      }
+      /* fix headers */
+
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+
+
+      let topTitle = [];
+      let bottomTitle = [];
+
+      jobData.forEach(jd => {
+        topTitle = [JobNames[jd.carg], JobNames[jd.carg], JobNames[jd.carg], ...topTitle];
+        bottomTitle = [...bottomTitle, "Número", "Nome", "Votos"];
+      })
+
+      XLSX.utils.sheet_add_aoa(worksheet, [topTitle, bottomTitle], { origin: "A1" });
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, "GERAL");
+
+      let merge = jobData.map((j, i) => {
+        const endIndex = i + 1;
+
+        let sc = i === 0 ? 0 : ((3 * i))
+        let se = (endIndex * 3) - 1;
+        return {
+          s: { r: 0, c: sc },
+          e: { r: 0, c: se }
+        }
+      })
+      worksheet['!merges'] = merge;
+
+
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        {
+          title: "Permission",
+          message: "Permissão de leitura é necessária."
+        }
+      );
+
+      if (granted) {
+
+        await mkdir(BU_SHEETS_PATH).catch((error) => { console.log(error) })
+
+
+        try {
+          /* create an XLSX file and try to save to Presidents.xlsx */
+          const bstr = XLSX.write(workbook, { type: 'binary', bookType: "xlsx" });
+          writeFile(BU_SHEETS_PATH + "/pleito_" + pollData['year'] + "_turno_" + pollData['turn'] + ".xlsx", bstr, "ascii")
+            .then(() => {
+              setLoadingSheetGeneration(false);
+              navigation.navigate("SheetGenerated")
+            }).catch(()=>{setSheetStatus('err')})
+
+        } catch (err) {
+          if (!toast.isActive('infoQrBu')) {
+            toast.show({
+              id: 'infoQrBu',
+              placement: "top",
+              render: () => ToastAlert({
+                toastInstance: toast,
+                variant: "left-accent",
+                status: "error",
+                isClosable: true,
+                title: 'Erro de Validação',
+                description: 'Ocorreu um erro na escrita da planilha, tente novamente mais tarde.',
+              })
+            })
+          }
+          console.log(err, 'write err')
+        }
+      } else {
+        toast.show({
+          id: 'infoQrBu',
+          placement: "top",
+          render: () => ToastAlert({
+            toastInstance: toast,
+            variant: "left-accent",
+            status: "error",
+            isClosable: true,
+            title: 'Erro de Validação',
+            description: 'A permissão de acesso ao storage é necessária para a criação da planilha.',
+          })
+        })
+
+      }
+    }
+    catch (e) {
+      setSheetStatus('error')
+    }
   }
 
   const submit = useCallback(async (data) => {
@@ -266,22 +282,28 @@ export default function Poll({ navigation, route }) {
         })
       }
       else {
-        const getContent = await getElectronicUrns().doc(data.id).get()
-        const newArrNames = [...getContent.data().candidatesName]
-        const nIx = newArrNames.findIndex(cnd => cnd.number === data.number)
-        if (nIx > -1) {
-
-          newArrNames[nIx].name = data.name
-
-          const update = await getElectronicUrns().doc(data.id).update({
-            candidatesName: newArrNames
+        await getElectionsCandidates().doc(data.cid).update({
+          name: data.name
+        })
+        if (!toast.isActive('infoQrBu')) {
+          toast.show({
+            id: 'infoQrBu',
+            placement: "top",
+            render: () => ToastAlert({
+              toastInstance: toast,
+              variant: "left-accent",
+              status: "success",
+              isClosable: true,
+              title: 'Atualização de candidato',
+              description: 'Nome do candidato atualizado corretamente.',
+            })
           })
         }
+        setNameModal(false);
       }
 
     } catch (e) {
-      console.log(e)
-      if (!toast.isActive('basic')) {
+      if (!toast.isActive('infoQrBu')) {
         toast.show({
           id: 'infoQrBu',
           placement: "top",
@@ -299,11 +321,17 @@ export default function Poll({ navigation, route }) {
 
   }, [])
   if (loadingSheetGeneration) {
-    return <SplashScreen description="Coletando dados e gerando planilha" />
+    return (sheetStatus === ''
+      ? <SplashScreen icon='google-spreadsheet'
+        description="GERANDO PLANILHA" info="Gerando planilha do pleito atual. Isso pode demorar um pouco." />
+      : <SplashScreen icon='google-spreadsheet' stop
+      description="ERRO NA GERAÇÃO DA PLANILHA" info="Não foi possível criar a planilha no momento" />
+      
+      )
   } else {
     return (
       loading
-        ? <SplashScreen description="Carregando Dados dos BUs" />
+        ? <SplashScreen description="Carregando Dados dos BUs" info={infoInitialLoad} />
         : <Box w='full' h='full'>
           <AppBar pageName={`Eleições ${pollData.year}`} backButton />
 
@@ -399,7 +427,7 @@ export default function Poll({ navigation, route }) {
                         <FlatList
                           maxH="260px"
                           data={item.candidates}
-                          renderItem={({ item: candidate, index }) => {
+                          renderItem={({ item: candidate }) => {
 
                             return (
                               <HStack p="10px" key={candidate.number}>
@@ -413,10 +441,12 @@ export default function Poll({ navigation, route }) {
                                     <IconButton
                                       icon={<Icon as={MCIcons} name="pencil" />}
                                       onPress={() => {
+
                                         setTempNameEditor({
-                                          id: item.id,
                                           carg: item.carg,
-                                          idx: index,
+                                          cid: candidate.cid,
+                                          eid: params.eid,
+                                          state: candidate.state,
                                           number: candidate.number,
                                           name: candidate.name
                                         })
@@ -496,7 +526,6 @@ export default function Poll({ navigation, route }) {
                         onPress={() => {
                           const jIx = jobData.findIndex(jj => jj.carg === tempNameEditor.carg)
                           if (jIx > -1) {
-                            console.log(jobData[jIx])
                             const cni = jobData[jIx].candidates.findIndex(cn => cn.number === tempNameEditor.number)
                             if (cni > -1) {
                               jobData[jIx].candidates[cni].name = tempNameEditor.name
@@ -504,7 +533,6 @@ export default function Poll({ navigation, route }) {
                               submit(tempNameEditor)
                             }
                           }
-                          setNameModal(false);
                         }}
                       >
                         <HStack justifyContent={'center'} alignItems={'center'}>

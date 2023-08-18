@@ -7,6 +7,7 @@ export const ERROR_ELECTRONIC_URN_ALREADY_EXIST = "ERROR_ELECTRONIC_URN_ALREADY_
 export const ERROR_QR_CODE_RECEIVE_INVALID = "ERROR_QR_CODE_RECEIVE_INVALID"
 export const ERROR_PERMISSION_DENIED = "ERROR_PERMISSION_DENIED"
 
+
 export const JobNames = {
   "1": "Presidente",
   "3": "Governador",

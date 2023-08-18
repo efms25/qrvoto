@@ -12,7 +12,7 @@ function SplashScreen(props) {
                 <Icon
                     size={40}
                     as={MCIcons}
-                    name="qrcode-scan"
+                    name={props && props.icon ? props.icon : "qrcode-scan"}
                     color="coolGray.800"
                 />
             </Center>
@@ -28,8 +28,9 @@ function SplashScreen(props) {
                 QR Voto
             </Heading>
             <Center my="10">
-                <Spinner size={50} color="coolGray.500" />
+                {!props || (props && !props.stop) &&<Spinner size={50} color="coolGray.500" />}
                 <Heading mt='3' textAlign={'center'}>{props && props.description}</Heading>
+                <Text textAlign={'center'} mt='2'>{props && props.info}</Text>
             </Center>
         </Box>
         <RedCometLogo />
