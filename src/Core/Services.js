@@ -3,10 +3,21 @@ import { Toast } from 'react-native-toast-message/lib/src/Toast';
 import uuid from 'react-native-uuid'
 import { RegexpJobsData, RegexpJobsFirstData, RegexpLeftPieceJob, RegxpBUHeaderPost, RegxpSecurity } from './Regexp';
 import { buExtractHeader, buExtractJobs, buQrCount, buResolution } from './Functions';
-import { ERROR_CANNOT_ADD_ELECTRONIC_URN_WITHOUT_HASH, ERROR_ELECTRONIC_URN_ALREADY_EXIST, ERROR_QR_CODE_RECEIVE_INVALID, SUCCESSFULLY_ELECTRONIC_URN_ADDED } from './Constants';
+import {
+  ERROR_CANNOT_ADD_ELECTRONIC_URN_WITHOUT_HASH,
+  ERROR_ELECTRONIC_URN_ALREADY_EXIST,
+  ERROR_QR_CODE_RECEIVE_INVALID,
+  SUCCESSFULLY_ELECTRONIC_URN_ADDED,
+  ERROR_PERMISSION_DENIED,
+  ERROR_ON_WRITE_ELECTRONIC_URN
+} from './Constants';
 const ElectionsCollection = firestore().collection("Elections");
 const EletronicUrnCollection = firestore().collection("EletronicUrns")
+const ElectionsCandidatesCollection = firestore().collection("ElectionsCandidates")
 
+function getElectionsCandidates() {
+  return ElectionsCandidatesCollection
+}
 
 function getElections() {
   return ElectionsCollection
@@ -196,7 +207,13 @@ async function addElectrionUrn(input) {
           }
         }
       }
-      //console.log(buContentData.jobData)
+
+      //Lista de nomes de candidatos ja no banco 
+      const currentCandidatesList = await getElectionsCandidates()
+        .where('eid', '==', electionId)
+        .where('state', '==', buContentData.unfe)
+        .get()
+
 
       //Montagem da lista de nomes dos candidatos
       const candidatesNames = []
@@ -204,14 +221,23 @@ async function addElectrionUrn(input) {
         Object.keys(item).forEach(val => {
           if (/[0-9]+/.test(val)) {
             if (!candidatesNames.includes(val)) {
-              candidatesNames.push({
-                number: val,
-                name: ""
-              })
+              const find = currentCandidatesList.docs.find(cd => cd.number === val)
+              if (find == null) {
+                const recheckList = candidatesNames.find(i => i.number === val)
+                if (recheckList == null) {
+                  candidatesNames.push({
+                    state: buContentData.unfe,
+                    eid: electionId,
+                    number: val,
+                    name: ""
+                  })
+                }
+              }
             }
           }
         })
       })
+
 
       //Montagem do EletronicUrn Data
       const electronicUrn = {
@@ -220,9 +246,19 @@ async function addElectrionUrn(input) {
         qntBus: qrBuInfo.total,
         buRawData: input,
         buContent: buContentData,
-        candidatesName: candidatesNames
       }
       if (electronicUrn.eid && electronicUrn.hash) {
+
+        //Batch para candidatos
+        if (candidatesNames.length > 0) {
+          const firestoreBatch = firestore().batch()
+          candidatesNames.forEach(doc => {
+            const docRef = getElectionsCandidates().doc();
+            firestoreBatch.set(docRef, doc);
+          })
+          firestoreBatch.commit()
+        }
+
         await EletronicUrnCollection.add(electronicUrn)
         return SUCCESSFULLY_ELECTRONIC_URN_ADDED;
 
@@ -231,8 +267,11 @@ async function addElectrionUrn(input) {
       }
     }
   } catch (e) {
+    if (e.code === "firestore/permission-denied") {
+      return ERROR_PERMISSION_DENIED
+    }
     return ERROR_ON_WRITE_ELECTRONIC_URN
   }
 }
 
-export { getElectronicUrns, getElections, addElections, addElectrionUrn }
+export { getElectionsCandidates, getElectronicUrns, getElections, addElections, addElectrionUrn }
