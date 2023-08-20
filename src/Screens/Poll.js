@@ -71,7 +71,7 @@ export default function Poll({ navigation, route }) {
         const jobsInfo = []
         let buArr = [];
         for (const urn of dataUrns.docs) {
-          console.log(urn)
+          // console.log(urn)
           const urnContent = urn.data()
           const buContent = urnContent.buContent;
           const candidatesFilter = dataCandidates.docs.filter(cand => cand.data().state === buContent.unfe);
@@ -305,7 +305,6 @@ export default function Poll({ navigation, route }) {
                     } else {
                       // Soma quantidade de votos
                       buC['jobData'].forEach(jd => {
-                        console.log(jd.carg, 'jd')
                         if (getCandidaetesOnlyFromBu(jd)) {
                           Object.entries(getCandidaetesOnlyFromBu(jd)).forEach(jdEntries => {
                             zoneRowData[sectionIndex].jobData[jd.carg][jdEntries[0]] += jdEntries[1];
@@ -331,44 +330,100 @@ export default function Poll({ navigation, route }) {
 
         zonesRows.forEach(zr => {
           let tableZoneRows = [];
-          // console.log(zr, 'zr')
+          tableZoneRows.push(['NUMERO', 'NOME', ...zr.zoneResults.map(zrs => 'SEÇÃO'), 'TOTAL']);
+          tableZoneRows.push(['NUMERO', 'NOME', ...zr.zoneResults.map(zrs => zrs.seca), 'TOTAL']);
+
           zr.zoneResults.forEach((zoneResult) => {
-            // console.log(zoneResult, 'result')
             if (zoneResult.jobData) {
               Object.entries(zoneResult.jobData).forEach((job) => {
                 Object.entries(job[1]).forEach((jb, jobIndex) => {
                   const candidateNumberIndex = tableZoneRows.findIndex(f => {
-                    return f['0-n'] === jb[0]
+                    return f[0] === job[0] + '-' + jb[0]
                   })
 
+
+
                   // if (jobIndex === 0) {
-                  //   tableZoneRows.push({ '0-n': JobNames[job[0]] })
+                  //   const jobNameIndex = tableZoneRows.findIndex(f => {
+                  //     return f['0-n'] === JobNames[job[0]];
+                  //   })
+                  //   if (jobNameIndex === -1) {
+                  //     tableZoneRows.push({ '0-n': JobNames[job[0]] })
+                  //   }
                   // }
 
+
+
+
+
+
                   if (tableZoneRows.length === 0 || candidateNumberIndex === -1) {
-                    let candidateVoteLine = {
-                      '0-n': jb[0],
-                      '0-name': '',
-                      [zoneResult.seca]: jb[1],
-                      total: jb[1]
-                    }
+                    let candidateVoteLine = [
+                      job[0] + '-' + jb[0], //Candidate Number
+                      '', //Candidate Name
+                    ]
+                    const secaIndex = tableZoneRows[1].indexOf(zoneResult.seca);
+
+                    candidateVoteLine[tableZoneRows[1].length - 1] = parseInt(jb[1])
+                    candidateVoteLine[secaIndex] = parseInt(jb[1])
+
                     tableZoneRows.push(candidateVoteLine);
                   } else {
-                    tableZoneRows[candidateNumberIndex] = {
-                      ...tableZoneRows[candidateNumberIndex],
-                      [zoneResult.seca]: jb[1],
-                      total: tableZoneRows[candidateNumberIndex]['total'] + jb[1]
-                    }
+                    const secaIndex = tableZoneRows[1].indexOf(zoneResult.seca);
+                    let sectionVoteValue = typeof tableZoneRows[candidateNumberIndex][secaIndex] === 'number' ? tableZoneRows[candidateNumberIndex][secaIndex] : 0;
+                    let totalVoteValue = typeof tableZoneRows[candidateNumberIndex][tableZoneRows[1].length - 1] === 'number' ? tableZoneRows[candidateNumberIndex][tableZoneRows[1].length - 1] : 0;
+                    tableZoneRows[candidateNumberIndex][secaIndex] = typeof sectionVoteValue === 'number' ? sectionVoteValue + jb[1] : undefined;
+                    tableZoneRows[candidateNumberIndex][tableZoneRows[1].length - 1] = typeof totalVoteValue === 'number' ? totalVoteValue + jb[1] : undefined;
                   }
+                  // if (tableZoneRows.length === 0 || candidateNumberIndex === -1) {
+                  //   let candidateVoteLine = {
+                  //     '0-n': job[0] + '-' + jb[0],
+                  //     '1-name': '',
+                  //     [zoneResult.seca]: jb[1],
+                  //     '9999999-total': jb[1]
+                  //   }
+                  //   tableZoneRows.push(candidateVoteLine);
+                  // } else {
+                  //   tableZoneRows[candidateNumberIndex] = {
+                  //     ...tableZoneRows[candidateNumberIndex],
+                  //     [zoneResult.seca]: jb[1],
+                  //     '9999999-total': tableZoneRows[candidateNumberIndex]['9999999-total'] + jb[1]
+                  //   }
+                  // }
+
                 })
               })
             }
           })
-          console.log(tableZoneRows, '--tableZoneRows')
-          const worksheetZone = XLSX.utils.json_to_sheet(tableZoneRows);
+          // tableZoneRows = tableZoneRows.map(tzr => {
+          //   return {
+          //     ...tzr,
+          //     '0-n': tzr['0-n'].split('-')[1] || tzr['0-n'].split('-')[0],
+          //   }
+          // })
+          // const worksheetZone = XLSX.utils.json_to_sheet(tableZoneRows);
+          const worksheetZone = XLSX.utils.aoa_to_sheet(tableZoneRows);
+
+          worksheetZone['!merges'] = [
+            {
+              s: { r: 0, c: 0 },
+              e: { r: 1, c: 0 },
+            },
+            {
+              s: { r: 0, c: 1 },
+              e: { r: 1, c: 1 },
+            },
+            {
+              s: { r: 0, c: tableZoneRows[0].length - 1 },
+              e: { r: 1, c: tableZoneRows[0].length - 1 },
+            },
+            {
+              s: { r: 0, c: 2 },
+              e: { r: 0, c: zr.zoneResults.length + 1 },
+            },
+
+          ];
           XLSX.utils.book_append_sheet(workbook, worksheetZone, zr.zoneName);
-
-
         })
       }
 
