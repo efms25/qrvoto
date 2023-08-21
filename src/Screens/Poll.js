@@ -327,7 +327,7 @@ export default function Poll({ navigation, route }) {
           } else return []
         })
         zonesRows = [].concat.apply([], [...zonesRows]);
-
+        let merges = []
         zonesRows.forEach(zr => {
           let tableZoneRows = [];
           tableZoneRows.push(['NUMERO', 'NOME', ...zr.zoneResults.map(zrs => 'SEÇÃO'), 'TOTAL']);
@@ -336,8 +336,27 @@ export default function Poll({ navigation, route }) {
           zr.zoneResults.forEach((zoneResult) => {
             if (zoneResult.jobData) {
               Object.entries(zoneResult.jobData).forEach((job) => {
-                // console.log(job[0], 'job')
+                console.log(job, 'job')
                 // console.log(jobData.find(f => f.carg === job[0]), 'jobData')
+
+                let jobNameIndex = tableZoneRows.findIndex(f => {
+                  return f[0] === JobNames[job[0]]
+                })
+
+                if (jobNameIndex === -1) {
+                  merges.push({
+                    s: { r: tableZoneRows.length, c: 0 },
+                    e: { r: tableZoneRows.length, c: zr.zoneResults.length + 2 }
+                  })
+                  tableZoneRows.push(
+                    [
+                      JobNames[job[0]],
+                      JobNames[job[0]],
+                      // ...zr.zoneResults.map(zrs => JobNames[job[0]]),
+                      // JobNames[job[0]],
+                    ]
+                  )
+                }
 
                 const candidates = jobData.find(f => f.carg === job[0]).candidates;
 
@@ -346,7 +365,6 @@ export default function Poll({ navigation, route }) {
                     return f[0] === job[0] + '-' + jb[0]
                   })
 
-                  console.log(candidates, 'candidates')
 
                   if (tableZoneRows.length === 0 || candidateNumberIndex === -1) {
                     let candidateVoteLine = [
@@ -363,7 +381,7 @@ export default function Poll({ navigation, route }) {
                     const secaIndex = tableZoneRows[1].indexOf(zoneResult.seca);
                     let sectionVoteValue = typeof tableZoneRows[candidateNumberIndex][secaIndex] === 'number' ? tableZoneRows[candidateNumberIndex][secaIndex] : 0;
                     let totalVoteValue = typeof tableZoneRows[candidateNumberIndex][tableZoneRows[1].length - 1] === 'number' ? tableZoneRows[candidateNumberIndex][tableZoneRows[1].length - 1] : 0;
-                    tableZoneRows[candidateNumberIndex][secaIndex] = typeof sectionVoteValue === 'number' ? sectionVoteValue + jb[1] : undefined;
+                    tableZoneRows[candidateNumberIndex][secaIndex] = typeof sectionVoteValue === 'number' ? sectionVoteValue + jb[1] : tableZoneRows[candidateNumberIndex][secaIndex];
                     tableZoneRows[candidateNumberIndex][tableZoneRows[1].length - 1] = typeof totalVoteValue === 'number' ? totalVoteValue + jb[1] : undefined;
                   }
 
@@ -412,7 +430,7 @@ export default function Poll({ navigation, route }) {
               s: { r: 0, c: 2 },
               e: { r: 0, c: zr.zoneResults.length + 1 },
             },
-
+            ...merges
           ];
           XLSX.utils.book_append_sheet(workbook, worksheetZone, zr.zoneName);
         })
