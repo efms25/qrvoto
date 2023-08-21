@@ -352,8 +352,6 @@ export default function Poll({ navigation, route }) {
                     [
                       JobNames[job[0]],
                       JobNames[job[0]],
-                      // ...zr.zoneResults.map(zrs => JobNames[job[0]]),
-                      // JobNames[job[0]],
                     ]
                   )
                 }
@@ -432,6 +430,8 @@ export default function Poll({ navigation, route }) {
             },
             ...merges
           ];
+
+          worksheetZone['!cols'] = [{ wch: 10 }, { wpx: 200 }, ...zr.zoneResults.map(() => ({ wch: 15 })), { wpx: 150 }];
           XLSX.utils.book_append_sheet(workbook, worksheetZone, zr.zoneName);
         })
       }
