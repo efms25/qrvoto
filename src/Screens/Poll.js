@@ -336,31 +336,22 @@ export default function Poll({ navigation, route }) {
           zr.zoneResults.forEach((zoneResult) => {
             if (zoneResult.jobData) {
               Object.entries(zoneResult.jobData).forEach((job) => {
+                // console.log(job[0], 'job')
+                // console.log(jobData.find(f => f.carg === job[0]), 'jobData')
+
+                const candidates = jobData.find(f => f.carg === job[0]).candidates;
+
                 Object.entries(job[1]).forEach((jb, jobIndex) => {
                   const candidateNumberIndex = tableZoneRows.findIndex(f => {
                     return f[0] === job[0] + '-' + jb[0]
                   })
 
-
-
-                  // if (jobIndex === 0) {
-                  //   const jobNameIndex = tableZoneRows.findIndex(f => {
-                  //     return f['0-n'] === JobNames[job[0]];
-                  //   })
-                  //   if (jobNameIndex === -1) {
-                  //     tableZoneRows.push({ '0-n': JobNames[job[0]] })
-                  //   }
-                  // }
-
-
-
-
-
+                  console.log(candidates, 'candidates')
 
                   if (tableZoneRows.length === 0 || candidateNumberIndex === -1) {
                     let candidateVoteLine = [
                       job[0] + '-' + jb[0], //Candidate Number
-                      '', //Candidate Name
+                      candidates.find(f => f.number === jb[0]).name, //Candidate Name
                     ]
                     const secaIndex = tableZoneRows[1].indexOf(zoneResult.seca);
 
@@ -375,6 +366,7 @@ export default function Poll({ navigation, route }) {
                     tableZoneRows[candidateNumberIndex][secaIndex] = typeof sectionVoteValue === 'number' ? sectionVoteValue + jb[1] : undefined;
                     tableZoneRows[candidateNumberIndex][tableZoneRows[1].length - 1] = typeof totalVoteValue === 'number' ? totalVoteValue + jb[1] : undefined;
                   }
+
                   // if (tableZoneRows.length === 0 || candidateNumberIndex === -1) {
                   //   let candidateVoteLine = {
                   //     '0-n': job[0] + '-' + jb[0],
@@ -395,13 +387,12 @@ export default function Poll({ navigation, route }) {
               })
             }
           })
-          // tableZoneRows = tableZoneRows.map(tzr => {
-          //   return {
-          //     ...tzr,
-          //     '0-n': tzr['0-n'].split('-')[1] || tzr['0-n'].split('-')[0],
-          //   }
-          // })
-          // const worksheetZone = XLSX.utils.json_to_sheet(tableZoneRows);
+
+          for (let i = 0; i < tableZoneRows.length; i++) {
+            if (i > 1) {
+              tableZoneRows[i][0] = tableZoneRows[i][0].split('-')[1]
+            }
+          }
           const worksheetZone = XLSX.utils.aoa_to_sheet(tableZoneRows);
 
           worksheetZone['!merges'] = [
