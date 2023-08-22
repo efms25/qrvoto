@@ -221,13 +221,14 @@ async function addElectrionUrn(input) {
         Object.keys(item).forEach(val => {
           if (/[0-9]+/.test(val)) {
             if (!candidatesNames.includes(val)) {
-              const find = currentCandidatesList.docs.find(cd => cd.number === val)
+              const find = currentCandidatesList.docs.find(cd => cd.number === val && cd.job === item.carg)
               if (find == null) {
-                const recheckList = candidatesNames.find(i => i.number === val)
+                const recheckList = candidatesNames.find(i => i.number === val && i.job === item.carg)
                 if (recheckList == null) {
                   candidatesNames.push({
                     state: buContentData.unfe,
                     eid: electionId,
+                    job: item.carg,
                     number: val,
                     name: ""
                   })

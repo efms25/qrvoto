@@ -205,4 +205,5 @@ interface BuCandidatesName{
     name: string //Nome do candidato
     state: string // Identificador do Estado Federativo
     eid: string // Identificador do pleito
+    job: string // Cargo relacionado.
 }

@@ -128,10 +128,11 @@ export default function Poll({ navigation, route }) {
               const candidates = []
               for (const [number, votes] of entries) {
                 if (number.match(/[0-9]+/)) {
-                  const nameObj = candidatesName.find(op => op.number === number)
+                  const nameObj = candidatesName.find(op => op.number === number && op.job === job.carg)
                   candidates.push({
                     cid: nameObj.id,
                     number: number,
+                    carg: job.carg,
                     state: nameObj.state,
                     name: nameObj != null ? nameObj.name : "",
                     numberOfVotes: parseInt(votes) || 0
@@ -152,14 +153,16 @@ export default function Poll({ navigation, route }) {
               for (const [number, votes] of entries) {
                 if (number.match(/[0-9]+/)) {
                   const checkCt = jobsInfo[idxJob].candidates.findIndex(cd => cd.number === number)
-                  const nameObj = candidatesName.find(op => op.number === number)
-
+                  const nameObj = candidatesName.find(op => op.number === number && op.job === job.carg)
                   if (checkCt > -1) {
                     jobsInfo[idxJob].candidates[checkCt].numberOfVotes += parseInt(votes)
                   } else {
 
                     jobsInfo[idxJob].candidates.push({
+                      cid: nameObj.id,
                       number: number,
+                      state: nameObj.state,
+                      carg: job.carg,
                       name: nameObj != null ? nameObj.name : "",
                       numberOfVotes: parseInt(votes) || 0
                     })
@@ -514,6 +517,7 @@ export default function Poll({ navigation, route }) {
         })
       }
       else {
+        console.log(data, 'onsubdata')
         await getElectionsCandidates().doc(data.cid).update({
           name: data.name
         })
