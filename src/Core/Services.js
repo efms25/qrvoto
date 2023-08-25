@@ -201,7 +201,6 @@ async function addElectrionUrn(input) {
           for (const piece of listOfItems) {
             const pieceParsed = buResolution(piece)
             if (pieceParsed != null) {
-              //console.log(pieceParsed)
               buContentData.jobData.push(pieceParsed)
             }
           }
@@ -220,25 +219,22 @@ async function addElectrionUrn(input) {
       buContentData.jobData.forEach(item => {
         Object.keys(item).forEach(val => {
           if (/[0-9]+/.test(val)) {
-            if (!candidatesNames.includes(val)) {
-              const find = currentCandidatesList.docs.find(cd => cd.number === val && cd.job === item.carg)
-              if (find == null) {
-                const recheckList = candidatesNames.find(i => i.number === val && i.job === item.carg)
-                if (recheckList == null) {
-                  candidatesNames.push({
-                    state: buContentData.unfe,
-                    eid: electionId,
-                    job: item.carg,
-                    number: val,
-                    name: ""
-                  })
-                }
+            const find = currentCandidatesList.docs.find(cd => cd.data().number === val && cd.data().job === item.carg)
+            if (find == null) {
+              const recheckList = candidatesNames.find(i => i.number === val && i.job === item.carg)
+              if (recheckList == null) {
+                candidatesNames.push({
+                  state: buContentData.unfe,
+                  eid: electionId,
+                  job: item.carg,
+                  number: val,
+                  name: ""
+                })
               }
             }
           }
         })
       })
-
 
       //Montagem do EletronicUrn Data
       const electronicUrn = {

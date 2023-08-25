@@ -6,18 +6,20 @@ import { ERROR_PERMISSION_DENIED, ERROR_ELECTRONIC_URN_ALREADY_EXIST, ERROR_ON_W
 import { Pressable } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { addElectrionUrn } from '../Core/Services';
+import { useGlobalContext } from '../Contexts/GlobalContext';
 
 function Processor(props) {
 
   const { navigation } = props
   const [status, setStatus] = useState('')
-  const [processed, setProcessed] = useState(false)//garante que não execute duas vezes
+  const {readyForProcess, setReadyForProcess} = useGlobalContext()
+
   useEffect(() => {
-    if (!processed) {
+    if (readyForProcess) {
       const params = props.route.params
       const buData = params.buData
       if (params && buData) {
-        setProcessed(true)
+        setReadyForProcess(false)
         addElectrionUrn(buData).then(resolve => {
           setStatus(resolve)
         })
@@ -27,11 +29,10 @@ function Processor(props) {
       }
     }
 
-  }, [props, processed])
+  }, [props, readyForProcess])
 
   useFocusEffect(useCallback(() => {
     setStatus("")
-    setProcessed(false)
   }, []))
 
   return (<Box h='100%'>

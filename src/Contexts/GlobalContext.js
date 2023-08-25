@@ -5,16 +5,21 @@ import { createContext } from "react";
 
 const GlobalContext = createContext({
     loading: false,
-    
+    readyForProcess: false,
+    setReadyForProcess: (val) => { },
+
 })
 
 function GlobalContextProvider(props) {
     const { children } = props
     const [loading, setLoading] = useState(false)
+    const [readyForProcess, setReadyForProcess] = useState(false)
 
     return (<GlobalContext.Provider value={{
         loading,
-        setLoading: (value)=>{
+        readyForProcess,
+        setReadyForProcess,
+        setLoading: (value) => {
             setLoading(value)
         }
     }}>

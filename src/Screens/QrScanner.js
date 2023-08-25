@@ -9,6 +9,7 @@ import IonIcons from 'react-native-vector-icons/Ionicons';
 import { useScanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
 import { buQrCount } from '../Core/Functions';
 import SplashScreen from '../Components/SplashScreen'
+import { useGlobalContext } from '../Contexts/GlobalContext';
 
 
 
@@ -19,6 +20,8 @@ export default function QrScanner() {
   const [flash, setFlash] = useState(false);
   const [qrCodes, setQrCodes] = useState([])
   const [cameraPermission, setCameraPermission] = useState();
+  const [moved, setMoved] = useState(false);
+  const { readyForProcess, setReadyForProcess } = useGlobalContext()
 
   const devices = useCameraDevices();
   const device = devices.back;
@@ -60,6 +63,7 @@ export default function QrScanner() {
     setFlash(false)
 
     return () => {
+      console.log("QrScanner Blur")
       setFlash(false)
     }
   }, []))
@@ -71,6 +75,7 @@ export default function QrScanner() {
       setCameraPermission(cameraPermissionStatus);
     })();
   }, []);
+
 
   useEffect(() => {
     if (barcodes.length) {
@@ -146,37 +151,37 @@ export default function QrScanner() {
   }, [barcodes, buQrCount]);
 
   useEffect(() => {
-    async function submit() {
-      let readyForProcess = true
-      if (qrCodes.length > 0) {
+    if (qrCodes.length > 0) {
 
-        for (const qrCodeObj of qrCodes) {
-          if (!qrCodeObj.scanned) {
-            return readyForProcess = false
-          }
-        }
-
-        if (readyForProcess) {
-          navigation.navigate("Processor", {
-            buData: qrCodes.map(qrCode => qrCode.data)
-          })
+      let check = true
+      for (const qrCodeObj of qrCodes) {
+        if (!qrCodeObj.scanned) {
+          check = false
+          break;
         }
       }
 
+      if (check) {
+        setReadyForProcess(true)
+      }
 
-    }
-    submit().catch((e) => {
-      toast.show({
-        placement: 'top',
-        render: ToastAlert({
-          isClosable: true,
-          description: "Ocorreu um erro no processamneto do QrCode.",
-          title: "ERRO DE LEITURA",
-          variant: 'error',
+      if (readyForProcess && !moved) {
+        setFlash(false)
+        setMoved(true)
+        navigation.reset({
+          index: 0,
+          routes: [
+            {
+              name: "Processor",
+              params: {
+                buData: qrCodes.map(qrCode => qrCode.data)
+              }
+            }
+          ]
         })
-      })
-    })
-  }, [qrCodes])
+      }
+    }
+  }, [qrCodes, readyForProcess, moved])
 
   if (device == null) return (<SplashScreen />);
   return (
@@ -187,7 +192,7 @@ export default function QrScanner() {
         torch={flash ? 'on' : 'off'}
         style={StyleSheet.absoluteFill}
         frameProcessor={frameProcessor}
-        frameProcessorFps={5}
+        frameProcessorFps={1}
       />
       <VStack p="10px">
         <Box bg="white.400" w="100%" maxH="60px">
@@ -253,6 +258,7 @@ export default function QrScanner() {
               <HStack pb="10px" display="flex" justifyContent="center">
                 {qrCodes.map((qr, i) => {
                   return (<Box
+                    key={i}
                     rounded="50"
                     borderColor={"green.400"}
                     borderWidth="2px"
@@ -269,10 +275,10 @@ export default function QrScanner() {
               </HStack>
             }
             <VStack alignItems={'center'}>
-            <Icon as={FA5Icons} my='10px' name="camera" size="60px" color="coolGray.300" minW="80px" />
+              <Icon as={FA5Icons} my='10px' name="camera" size="60px" color="coolGray.300" minW="80px" />
               <Text fontSize={'md'} textAlign={'center'}>Aponte para o QR code do Boletim de Urna, a leitura será automática.</Text>
             </VStack>
-            
+
           </Box>
         </Box>
       </VStack >
