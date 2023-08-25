@@ -89,8 +89,8 @@ export default function ElectionList({ navigation, route }) {
           <Box alignContent={'center'} h='full'>
             <Center h='full'>
               <Icon as={FA5Icons} name="vote-yea" size="60px" color="coolGray.300" minW="80px" />
-              <Heading color="coolGray.300" fontWeight="medium" textAlign="center" size="xl" py="8px">
-                Não há nenhum pleito cadastrado.
+              <Heading color="coolGray.300" fontWeight="medium" textAlign="center" size="xl" px='8px' py="18px">
+                Não há pleitos cadastrados.
               </Heading>
             </Center>
           </Box>

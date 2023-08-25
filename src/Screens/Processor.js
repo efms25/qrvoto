@@ -2,30 +2,36 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Box, VStack, Center, Heading, Spinner, Text, HStack, Button, Icon } from 'native-base'
 import MCIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { ERROR_ELECTRONIC_URN_ALREADY_EXIST, ERROR_ON_WRITE_ELECTRONIC_URN, ERROR_QR_CODE_RECEIVE_INVALID, SUCCESSFULLY_ELECTRONIC_URN_ADDED } from '../Core/Constants';
+import { ERROR_PERMISSION_DENIED, ERROR_ELECTRONIC_URN_ALREADY_EXIST, ERROR_ON_WRITE_ELECTRONIC_URN, ERROR_QR_CODE_RECEIVE_INVALID, SUCCESSFULLY_ELECTRONIC_URN_ADDED } from '../Core/Constants';
 import { Pressable } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { addElectrionUrn } from '../Core/Services';
 
 function Processor(props) {
 
+  const { navigation } = props
   const [status, setStatus] = useState('')
-  const navigator = useNavigation()
+  const [processed, setProcessed] = useState(false)//garante que não execute duas vezes
   useEffect(() => {
-    const params = props.route.params
-    const buData = params.buData
-    if (params && buData) {
-      addElectrionUrn(buData).then(resolve => {
-        setStatus(resolve)
-      })
+    if (!processed) {
+      const params = props.route.params
+      const buData = params.buData
+      if (params && buData) {
+        setProcessed(true)
+        addElectrionUrn(buData).then(resolve => {
+          setStatus(resolve)
+        })
+      }
+      else {
+        setStatus('ERROR_INPUT_BU_CANNOT_BY_EMPTY')
+      }
     }
-    else {
-      setStatus('ERROR_INPUT_BU_CANNOT_BY_EMPTY')
-    }
-  }, [props])
+
+  }, [props, processed])
 
   useFocusEffect(useCallback(() => {
     setStatus("")
+    setProcessed(false)
   }, []))
 
   return (<Box h='100%'>
@@ -122,7 +128,7 @@ function Processor(props) {
             <Button
               variant={'ghost'}
               onPress={(ev) => {
-                navigator.push('QrScanner')
+                navigation.push('QrScanner')
               }}>
               <HStack alignItems={'center'}>
                 <Icon
@@ -140,7 +146,14 @@ function Processor(props) {
               <Button
                 variant={'primary'}
                 onPress={(ev) => {
-                  navigator.navigate('QrScanner')
+                  navigation.reset({
+                    index:1,
+                    routes: [
+                      {name: "List"},
+                      {name: "QrScanner"}
+                    ]
+                  })
+                  //navigation.navigate('QrScanner')
                 }}>
                 <HStack alignItems={'center'}>
                   <Icon
@@ -155,7 +168,10 @@ function Processor(props) {
               <Button
                 variant={'primary'}
                 onPress={(ev) => {
-                  navigator.navigate('Listagem')
+                  navigation.reset({
+                    index: 0,
+                    rountes: [{name:'List'}]
+                  })
                 }}>
                 <HStack alignItems={'center'}>
                   <Icon

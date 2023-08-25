@@ -1,4 +1,5 @@
-import { Text, Icon, Box, VStack, HStack, IconButton, Alert, useToast, CloseIcon } from 'native-base';
+import { Text, Icon, Box, VStack, HStack, IconButton, Alert, useToast, CloseIcon, Center } from 'native-base';
+import FA5Icons from 'react-native-vector-icons/FontAwesome5';
 import { writeFile, writeFileXLSX } from "xlsx";
 import { StyleSheet, Dimensions } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
@@ -57,6 +58,10 @@ export default function QrScanner() {
   useFocusEffect(useCallback(() => {
     setQrCodes([])
     setFlash(false)
+
+    return () => {
+      setFlash(false)
+    }
   }, []))
 
 
@@ -193,7 +198,7 @@ export default function QrScanner() {
               borderRadius="full"
               bg="coolGray.800:alpha.20"
               onPress={() => {
-                navigation.navigate('Listagem');
+                navigation.navigate('List');
               }}
               _icon={{
                 color: 'coolGray.300',
@@ -263,7 +268,11 @@ export default function QrScanner() {
                 })}
               </HStack>
             }
-            <Text>Aponte para o QR code do Boletim de Urna, a leitura será automática.</Text>
+            <VStack alignItems={'center'}>
+            <Icon as={FA5Icons} my='10px' name="camera" size="60px" color="coolGray.300" minW="80px" />
+              <Text fontSize={'md'} textAlign={'center'}>Aponte para o QR code do Boletim de Urna, a leitura será automática.</Text>
+            </VStack>
+            
           </Box>
         </Box>
       </VStack >

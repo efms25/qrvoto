@@ -19,7 +19,7 @@ function Router() {
         {isLogged ? (
           <>
             <Stack.Screen
-              name="Listagem"
+              name="List"
               component={ElectionList}
               options={{
                 title: 'Listagem',
