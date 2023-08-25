@@ -1,6 +1,6 @@
 import { Text, Icon, Box, VStack, HStack, IconButton, Alert, useToast, CloseIcon, Center } from 'native-base';
 import FA5Icons from 'react-native-vector-icons/FontAwesome5';
-import { writeFile, writeFileXLSX } from "xlsx";
+import { read, writeFile, writeFileXLSX } from "xlsx";
 import { StyleSheet, Dimensions } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Camera, useCameraDevices } from 'react-native-vision-camera';
@@ -18,6 +18,7 @@ export default function QrScanner() {
   const toast = useToast();
 
   const [flash, setFlash] = useState(false);
+  const [ready, setReady] = useState(false);
   const [qrCodes, setQrCodes] = useState([])
   const [cameraPermission, setCameraPermission] = useState();
   const [moved, setMoved] = useState(false);
@@ -168,20 +169,27 @@ export default function QrScanner() {
       if (readyForProcess && !moved) {
         setFlash(false)
         setMoved(true)
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: "Processor",
-              params: {
-                buData: qrCodes.map(qrCode => qrCode.data)
-              }
-            }
-          ]
-        })
+        setReady(true)
       }
     }
   }, [qrCodes, readyForProcess, moved])
+
+  useEffect(() => {
+    if (ready) {
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: "Processor",
+            params: {
+              buData: qrCodes.map(qrCode => qrCode.data)
+            }
+          }
+        ]
+      })
+    }
+
+  }, [qrCodes, ready])
 
   if (device == null) return (<SplashScreen />);
   return (
