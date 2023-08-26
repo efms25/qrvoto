@@ -12,7 +12,7 @@ function Processor(props) {
 
   const { navigation } = props
   const [status, setStatus] = useState('')
-  const {readyForProcess, setReadyForProcess} = useGlobalContext()
+  const { readyForProcess, setReadyForProcess } = useGlobalContext()
 
   useEffect(() => {
     if (readyForProcess) {
@@ -148,10 +148,10 @@ function Processor(props) {
                 variant={'primary'}
                 onPress={(ev) => {
                   navigation.reset({
-                    index:1,
+                    index: 1,
                     routes: [
-                      {name: "List"},
-                      {name: "QrScanner"}
+                      { name: "List" },
+                      { name: "QrScanner" }
                     ]
                   })
                   //navigation.navigate('QrScanner')
@@ -169,10 +169,7 @@ function Processor(props) {
               <Button
                 variant={'primary'}
                 onPress={(ev) => {
-                  navigation.reset({
-                    index: 0,
-                    rountes: [{name:'List'}]
-                  })
+                  navigation.push('List')
                 }}>
                 <HStack alignItems={'center'}>
                   <Icon

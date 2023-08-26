@@ -213,6 +213,12 @@ android {
         }
     }
     signingConfigs {
+        release {
+            storeFile file('qrvoto.keystore')
+            storePassword 'qrvoto'
+            keyAlias 'qrvoto'
+            keyPassword 'qrvoto'
+        }
         debug {
             storeFile file('debug.keystore')
             storePassword 'android'
@@ -229,6 +235,7 @@ android {
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
